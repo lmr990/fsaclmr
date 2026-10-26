@@ -6,6 +6,7 @@ cone_id_mapper_node:
     input_topic: /mapping/cone_map
     output_topic: /urinay/cone_map
     assoc_dist: 1.0
+    dedupe_radius: 1.0
 
 urinay_path_bridge_node:
   ros__parameters:
@@ -20,10 +21,10 @@ urinay_path_bridge_node:
     velocity_topic: /vehicle/velocity
     use_velocity_seed: true
     speed_profile:
-      speed_cap: 6.0
-      max_lateral_acc: 5.0
-      max_accel: 2.5
-      max_brake: 4.0
-      min_speed: 2.0
+      speed_cap: 1.5
+      max_lateral_acc: 3.0
+      max_accel: 1.0
+      max_brake: 2.0
+      min_speed: 0.8
       curvature_lookahead_m: 5.0
       decel_to_stop_at_end: true

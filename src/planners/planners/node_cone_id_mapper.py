@@ -12,11 +12,13 @@ class ConeIdMapperNode(Node, ConeIdMapper):
         self.declare_parameter("input_topic", "/mapping/cone_map")
         self.declare_parameter("output_topic", "/urinay/cone_map")
         self.declare_parameter("assoc_dist", 1.0)
+        self.declare_parameter("dedupe_radius", 1.0)
         self.init_id_mapper(
             self,
             self.get_parameter("input_topic").value,
             self.get_parameter("output_topic").value,
             float(self.get_parameter("assoc_dist").value),
+            float(self.get_parameter("dedupe_radius").value),
         )
         self.get_logger().info("---ConeIdMapper node initialised---")
 

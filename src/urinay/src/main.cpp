@@ -97,6 +97,8 @@ class UrinayNode : public rclcpp::Node {
     try {
       tf = tfBuffer_->lookupTransform(mapFrame_, baseFrame_, tf2::TimePointZero);
     } catch (const tf2::TransformException &e) {
+      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 3000,
+                           "TF %s->%s failed: %s", mapFrame_.c_str(), baseFrame_.c_str(), e.what());
       return;  // keep last known pose; mapCallback warns if never received
     }
     auto odom = std::make_shared<nav_msgs::msg::Odometry>();

@@ -48,17 +48,46 @@ def match_cones(prev_positions: dict, detections: list, assoc_dist: float) -> tu
     return assignments, next_free_id
 
 
+def dedupe_detections(detections: list, radius: float) -> list:
+    """Collapse detections that land on the same physical cone.
+
+    The upstream mapper can emit several entries per cone when detections are
+    noisy (seen here as clusters of 5-8 points within half a metre). Urinay
+    triangulates those into degenerate triangles with sub-metre edges, which
+    corrupts the search, so each cluster is reduced to its centroid.
+    """
+    if radius <= 0.0:
+        return list(detections)
+    radius_sq = radius * radius
+    clusters = []  # list of [sum_x, sum_y, count]
+    for x, y in detections:
+        for c in clusters:
+            cx, cy = c[0] / c[2], c[1] / c[2]
+            if (cx - x) ** 2 + (cy - y) ** 2 < radius_sq:
+                c[0] += x
+                c[1] += y
+                c[2] += 1
+                break
+        else:
+            clusters.append([x, y, 1])
+    return [(c[0] / c[2], c[1] / c[2]) for c in clusters]
+
+
 class ConeIdMapper:
     """Mixin for the ROS node; holds the id state and the conversion."""
 
-    def init_id_mapper(self, node: Node, input_topic: str, output_topic: str, assoc_dist: float):
+    def init_id_mapper(self, node: Node, input_topic: str, output_topic: str, assoc_dist: float,
+                       dedupe_radius: float = 1.0):
         self._assoc_dist = assoc_dist
+        self._dedupe_radius = dedupe_radius
         self._prev_positions = {}  # id -> (x, y) of the last published map
         node.create_subscription(ConeDetectionStamped, input_topic, self._cone_map_callback, QOS_LATEST)
         self._id_map_pub = node.create_publisher(ConeWithIdArray, output_topic, QOS_LATEST)
 
     def _cone_map_callback(self, msg: ConeDetectionStamped):
-        detections = [(c.location.x, c.location.y) for c in msg.cones]
+        detections = dedupe_detections(
+            [(c.location.x, c.location.y) for c in msg.cones], self._dedupe_radius
+        )
         if not detections:
             return
 
