@@ -1,0 +1,57 @@
+# Legacy velocity interpreter (kept for reference / fallback launch profiles).
+vel_to_ackermann_node:
+  ros__parameters:
+    Kp: 4.0
+    wheelbase: 1.5
+    distance_ctrl: True
+    distance_Kp: -20.0
+    distance_max: 1.5
+    angle_limit: 40.0
+    map_frame: track
+    base_frame: base_link
+
+# ---- New path tracker (adaptive-lookahead PP + curvature FF + steering PID) ----
+path_tracker_node:
+  ros__parameters:
+    map_frame: track
+    base_frame: base_link
+    path_topic: /planning/path_with_speeds
+    velocity_topic: /vehicle/velocity       # Float32 [m/s]
+    steering_fb_topic: /vehicle/steering_angle  # Float32 [deg]
+    vy_topic: ""                            # non-empty enables slip compensation
+    cmd_topic: /control/driving_command
+
+    control_rate: 20.0        # [Hz]
+    path_timeout_sec: 0.5     # tracker-level staleness -> command zero speed
+
+    # adaptive lookahead: Ld = clamp(kv*v + kl, min, max) [m]
+    lookahead_kv: 0.55
+    lookahead_kl: 1.8
+    min_lookahead: 2.0
+    max_lookahead: 8.0
+
+    wheelbase: 1.5            # [m] keep in sync with the vehicle model
+
+    # steering: command space is DEGREES, ±90 = full lock (EUFS plugin)
+    max_steering_deg: 40.0
+    curvature_ff_gain: 1.0    # set 0.0 if feedforward sign needs verifying on track
+    slip_gain: 0.5
+    steer_kp: 1.0             # with bias structure: 1.0 => output == target angle
+    steer_ki: 0.0
+    steer_kd: 0.0
+    steer_rate_frac: 0.5      # max steering change per cycle, fraction of max
+
+    # longitudinal ramp on the commanded speed [m/s^2]
+    speed_ramp_accel: 2.5
+    speed_ramp_brake: 4.0
+
+# ---- Safety watchdog (wall-clock staleness failsafe) ----
+safety_watchdog_node:
+  ros__parameters:
+    path_topic: /planning/path_with_speeds
+    cmd_topic: /control/driving_command
+    map_frame: track
+    base_frame: base_link
+    timeout_sec: 2.0          # wall-clock, immune to sim time jumps
+    stop_rate: 10.0           # [Hz] stop command repetition while triggered
+    stop_accel: -5.0          # [m/s^2] advertised on the stop frame

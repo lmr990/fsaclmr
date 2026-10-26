@@ -1,0 +1,24 @@
+# colcon 编译产物
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 训练输出与大文件（视频 / 模型权重）
+TCone-YOLO-main/runs/
+*.pt
+*.onnx
+*.engine
+*.mp4
+*.zip
+
+# 系统 / 编辑器
+.DS_Store
+*.swp
+.vscode/
+.idea/

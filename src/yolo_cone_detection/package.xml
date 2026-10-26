@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+    <name>yolo_cone_detection</name>
+    <version>1.0.0</version>
+    <description>YOLO-based cone detection node for FSAC autonomous racecar (TCone-YOLO).</description>
+    <maintainer email="team@qutmotorsport.com">QUTMS</maintainer>
+    <license>MIT</license>
+
+    <depend>rclpy</depend>
+
+    <!-- Messages -->
+    <depend>sensor_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>driverless_msgs</depend>
+    <depend>std_msgs</depend>
+
+    <!-- Custom packages -->
+    <depend>driverless_common</depend>
+
+    <!-- TF -->
+    <depend>tf2_ros</depend>
+
+    <!-- Image conversion -->
+    <depend>cv_bridge</depend>
+
+    <!-- Python (PyTorch / OpenCV installed via pip, not as ROS deps) -->
+    <depend>python3-numpy</depend>
+
+    <export>
+        <build_type>ament_python</build_type>
+    </export>
+</package>

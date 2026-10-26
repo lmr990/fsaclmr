@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>eufs_launcher</name>
+  <version>2.0.0</version>
+  <description>Configures and launches eufs_sim.</description>
+
+  <author email="cambobmat@icloud.com">Cameron Matthew</author>
+  <author email="siliconlad@protonmail.com">Angus Stewart</author>
+
+  <maintainer email="team@qutmotorsport.com">Alastair Bradford</maintainer>
+
+  <license>MIT</license>
+
+  <depend>rclpy</depend>
+  <depend>rqt_gui</depend>
+  <depend>rviz2</depend>
+
+  <depend>launch</depend>
+  <depend>launch_ros</depend>
+
+  <depend>python3-yaml</depend>
+  <depend>python3-pandas</depend>
+  <depend>python3-qt5-bindings</depend>
+  <depend>ament_index_python</depend>
+
+  <depend>eufs_rqt</depend>
+  <depend>eufs_tracks</depend>
+  <depend>eufs_racecar</depend>
+  <depend>eufs_config</depend>
+  <depend>state_control</depend>
+  <!-- <depend>vehicle_supervisor</depend> -->
+  <depend>rviz_marker_plugins</depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+    <rqt_gui plugin="${prefix}/plugin.xml"/>
+  </export>
+</package>

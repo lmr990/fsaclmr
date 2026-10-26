@@ -1,0 +1,40 @@
+ft_planner_node:
+  ros__parameters:
+    map_frame: track
+    base_frame: base_link
+    # cone input: cone_mapper merged map by default; set "slam/cone_detection"
+    # to bypass the mapper and consume a raw detection topic
+    cone_topic: /mapping/cone_map
+    max_n_neighbors: 5
+    max_dist: 6.5
+    max_dist_to_first: 6.0
+    max_length: 20
+    threshold_directional_angle: 30
+    threshold_absolute_angle: 55
+    use_unknown_cones: True
+
+    smoothing: 0.2
+    predict_every: 0.1
+    max_deg: 3
+
+    maximal_distance_for_valid_path: 5
+    mpc_path_length: 20
+    mpc_prediction_horizon: 40
+
+    min_track_width: 3.5
+    max_search_range: 5
+    max_search_angle: 45
+    matches_should_be_monotonic: True
+
+    # ---- three-pass speed profile (planners.speed_profile) ----
+    speed_profile:
+      speed_cap: 6.0            # [m/s] absolute ceiling
+      max_lateral_acc: 5.0      # [m/s^2] cornering limit
+      max_accel: 2.5            # [m/s^2] forward pass limit
+      max_brake: 4.0            # [m/s^2] backward pass limit
+      min_speed: 2.0            # [m/s] end-of-path stop target
+      curvature_lookahead_m: 5.0  # [m] preview window for braking before corners
+      decel_to_stop_at_end: True
+    curvature_smoothing_window: 3  # odd window, 0/1 disables
+    velocity_topic: /vehicle/velocity
+    use_velocity_seed: True

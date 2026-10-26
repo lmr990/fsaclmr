@@ -1,0 +1,2 @@
+# Put things in here to remove them from the launcher
+blacklist.txt

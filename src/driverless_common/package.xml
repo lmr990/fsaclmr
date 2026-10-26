@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+    <name>driverless_common</name>
+    <version>0.0.0</version>
+    <description>QUTMS Driverless common Python modules</description>
+    <maintainer email="team@qutmotorsport.com">Alastair Bradford</maintainer>
+    <license>MIT</license>
+
+    <!-- Messages -->
+    <depend>driverless_msgs</depend>
+    <depend>lifecycle_msgs</depend>
+    <depend>sensor_msgs</depend>
+    <depend>std_msgs</depend>
+    <depend>ackermann_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>visualization_msgs</depend>
+    <depend>builtin_interfaces</depend>
+
+    <!-- Python -->
+    <depend>python3-opencv</depend>
+    <depend>python3-numpy</depend>
+    <depend>python3-transforms3d</depend>
+
+    <depend>cv_bridge</depend>
+
+    <exec_depend>ros2launch</exec_depend>
+
+    <export>
+        <build_type>ament_python</build_type>
+    </export>
+</package>

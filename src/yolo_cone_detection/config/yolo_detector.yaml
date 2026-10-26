@@ -1,0 +1,30 @@
+yolo_detector_node:
+  ros__parameters:
+    # ---- Paths (adjust tcone_yolo_path to your workspace) ----
+    # Absolute path to the TCone-YOLO repository root.
+    tcone_yolo_path: "/home/lmr/qutms_ws/src/TCone-YOLO-main"
+
+    # Paths below are resolved relative to tcone_yolo_path if not absolute.
+    weights: "compared-results/model/TCone-YOLO_model/weights/best.pt"
+    data_yaml: "data/Cone.yaml"
+
+    # ---- Inference ----
+    imgsz: 640
+    conf_thres: 0.15
+    iou_thres: 0.45
+    max_det: 1000
+    # '' = auto-detect (CUDA if available, else CPU). Use 'cpu' to force CPU.
+    device: ""
+    half: false  # FP16; only effective on CUDA.
+
+    # ---- Output ----
+    output_frame: "track"
+    min_range: 0.5
+    # Match the simulated ZED2i depth sensor effective range (~15m).
+    max_range: 15.0
+
+    # ---- Topics ----
+    image_topic: "/zed2i/zed_node/rgb/image_rect_color"
+    depth_topic: "/zed2i/zed_node/depth/depth_registered"
+    camera_info_topic: "/zed2i/zed_node/rgb/camera_info"
+    publish_topic: "slam/cone_detection"

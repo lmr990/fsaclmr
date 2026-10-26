@@ -1,0 +1,15 @@
+{
+  "window_s": 40.1,
+  "camera_fps": 21.58,
+  "detection_fps": 0.3,
+  "detections_count_avg": null,
+  "det_age_s_avg": null,
+  "det_age_s_p95": null,
+  "cpu_percent": {
+    "yolo": 111.7,
+    "yolo_rss_mb": 1443
+  },
+  "gpu_first": "3, 328, P0, 1282",
+  "gpu_last": "0, 328, P0, 1282",
+  "n_samples": 20
+}
