@@ -1,0 +1,50 @@
+# Urinay ROS2 parameters (ported from config/common.yml + autocross.yml of the original repo)
+urinay:
+  ros__parameters:
+    # I/O topics
+    input_cones_topic: /urinay/cone_map
+    input_pose_topic: /odometry/filtered   # only used when use_tf_pose is false
+    output_full_topic: /AS/P/pathlimits/full
+    output_partial_topic: /AS/P/pathlimits/partial
+
+    # Pose source: true = read TF (map_frame -> base_frame), false = subscribe odometry
+    use_tf_pose: true
+    map_frame: track
+    base_frame: base_link
+
+    verbose: false
+    shutdown_on_loop_closure: false   # keep running after loop closure; bridge keeps publishing
+    min_cone_confidence: 0.0
+
+    # Markers (RViz)
+    publish_markers: true
+    visualize_treeSearch: false
+    marker_topics.triangulation: /AS/P/urinay/markers/triangulation
+    marker_topics.way: /AS/P/urinay/markers/way
+    marker_topics.treeSearch: /AS/P/urinay/markers/treeSearch
+
+    # WayComputer
+    max_triangle_edge_len: 9.0
+    min_triangle_angle: 0.25
+    failsafe_max_way_horizon_size: 6
+    general_failsafe: true
+    general_failsafe_safetyFactor: 1.4
+
+    # WayComputer::Search
+    max_way_horizon_size: 0
+    tree_search_max_height: 7
+    search_radius: 5.0
+    max_angle_diff: 0.6
+    min_track_width: 2.8
+    max_search_options: 2
+    overnext_midpoint_angle: 0.2
+    max_next_heuristic: 3.0
+    heur_dist_weight: 0.6
+    heur_track_width_diff_weight: 0.2
+    allow_intersection: false
+    min_dist_between_midpoints: 0.09
+
+    # WayComputer::Trace
+    max_dist_loop_closure: 1.0
+    max_angle_diff_loop_closure: 0.6
+    vital_num_midpoints: 5

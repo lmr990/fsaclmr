@@ -6,11 +6,14 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, SetEnvironmentVariable
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 
 
 def generate_launch_description():
+    planner = LaunchConfiguration("planner")
+    use_urinay = PythonExpression(["'", planner, "' == 'urinay'"])
+    use_ft = PythonExpression(["'", planner, "' == 'ft'"])
     # nav2 stack
     nav_stack_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -30,8 +33,37 @@ def generate_launch_description():
     planner_node = Node(
         package="planners",
         executable="ft_planner_node",
+        condition=IfCondition(use_ft),
         parameters=[
             get_package_share_path("planners") / "config" / "ft_planner.yaml",
+        ],
+        output="both",
+    )
+    # urinay chain: cone_id_mapper -> urinay_exec -> urinay_path_bridge
+    cone_id_mapper_node = Node(
+        package="planners",
+        executable="cone_id_mapper_node",
+        condition=IfCondition(use_urinay),
+        parameters=[
+            get_package_share_path("planners") / "config" / "urinay.yaml",
+        ],
+        output="both",
+    )
+    urinay_node = Node(
+        package="urinay",
+        executable="urinay_exec",
+        condition=IfCondition(use_urinay),
+        parameters=[
+            get_package_share_path("urinay") / "config" / "urinay.yaml",
+        ],
+        output="both",
+    )
+    urinay_path_bridge_node = Node(
+        package="planners",
+        executable="urinay_path_bridge_node",
+        condition=IfCondition(use_urinay),
+        parameters=[
+            get_package_share_path("planners") / "config" / "urinay.yaml",
         ],
         output="both",
     )
@@ -50,9 +82,17 @@ def generate_launch_description():
     return LaunchDescription(
         [
             stdout_linebuf_envvar,
+            DeclareLaunchArgument(
+                "planner",
+                default_value="urinay",
+                description="Path planner: urinay (color-blind Delaunay) or ft (FaSTTUBe)",
+            ),
             nav_stack_launch,
             grid_to_cone_node,
             planner_node,
+            cone_id_mapper_node,
+            urinay_node,
+            urinay_path_bridge_node,
             ackermann_control_node,
         ]
     )

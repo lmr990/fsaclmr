@@ -28,6 +28,9 @@ set(msg_files
   "msg/AVStateStamped.msg"
   "msg/ROSStateStamped.msg"
   "msg/PathWithSpeeds.msg"
+  "msg/ConeWithId.msg"
+  "msg/ConeWithIdArray.msg"
+  "msg/PathLimits.msg"
   "srv/TriggerBagRecord.srv"
 )
 

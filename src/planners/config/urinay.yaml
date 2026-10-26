@@ -1,0 +1,28 @@
+# Parameters for the urinay adapter nodes (cone_id_mapper + urinay_path_bridge).
+# The urinay C++ node's own parameters live in the urinay package
+# (urinay/config/urinay.yaml).
+cone_id_mapper_node:
+  ros__parameters:
+    input_topic: /mapping/cone_map
+    output_topic: /urinay/cone_map
+    assoc_dist: 1.0
+
+urinay_path_bridge_node:
+  ros__parameters:
+    map_frame: track
+    partial_topic: /AS/P/pathlimits/partial
+    full_topic: /AS/P/pathlimits/full
+    path_topic: /planning/midline_path
+    path_with_speeds_topic: /planning/path_with_speeds
+    publish_rate: 10.0
+    curvature_smoothing_window: 3
+    velocity_topic: /vehicle/velocity
+    use_velocity_seed: true
+    speed_profile:
+      speed_cap: 6.0
+      max_lateral_acc: 5.0
+      max_accel: 2.5
+      max_brake: 4.0
+      min_speed: 2.0
+      curvature_lookahead_m: 5.0
+      decel_to_stop_at_end: true
