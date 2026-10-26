@@ -30,7 +30,9 @@ class RosManager(QObject):
     """
 
     ros2_status_changed = Signal(bool)
-    graph_updated = Signal(dict)
+    # Payload-free: Python objects must not cross the spin thread into Qt
+    # (see vehicle_state for the PySide6 refcount crash this avoids).
+    graph_updated = Signal()
 
     # Polling interval (seconds) for graph info.
     POLL_INTERVAL = 2.0
@@ -43,6 +45,7 @@ class RosManager(QObject):
         self._running = False
         self._ros2_ok = False
         self._stop_event = threading.Event()
+        self._last_graph = {}
 
     def start(self):
         """Initialise rclpy, create a hidden node, and start spin + poll threads."""
@@ -108,6 +111,10 @@ class RosManager(QObject):
     def node(self):
         return self._node
 
+    def last_graph(self) -> dict:
+        """Snapshot of the most recently polled ROS graph (GUI thread)."""
+        return self._last_graph
+
     def _spin_loop(self):
         while self._running and self._node is not None:
             try:
@@ -119,8 +126,8 @@ class RosManager(QObject):
     def _poll_loop(self):
         while self._running and self._node is not None:
             try:
-                graph = self._collect_graph()
-                self.graph_updated.emit(graph)
+                self._last_graph = self._collect_graph()
+                self.graph_updated.emit()
             except Exception as exc:
                 logger.error("graph poll error: %s", exc)
             self._stop_event.wait(self.POLL_INTERVAL)

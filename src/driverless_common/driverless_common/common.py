@@ -43,6 +43,16 @@ QOS_ALL = QoSProfile(
     durability=QoSDurabilityPolicy.VOLATILE,
 )
 
+# Control commands must be RELIABLE: the eufs_sim race car plugin subscribes
+# to /control/driving_command with the default (RELIABLE) QoS, and a
+# best-effort publisher never connects to a reliable subscriber.
+QOS_COMMAND = QoSProfile(
+    reliability=QoSReliabilityPolicy.RELIABLE,
+    history=QoSHistoryPolicy.KEEP_LAST,
+    depth=1,
+    durability=QoSDurabilityPolicy.VOLATILE,
+)
+
 
 def dist(p1: List[float], p2: List[float]) -> float:
     """

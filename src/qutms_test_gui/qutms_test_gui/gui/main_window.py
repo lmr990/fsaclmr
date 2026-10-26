@@ -74,20 +74,17 @@ class MainWindow(QMainWindow):
 
         # ROS2 graph -> Dashboard + Nodes + Topics pages.
         self.ros_manager.ros2_status_changed.connect(self.dashboard.set_ros2_connected)
-        self.ros_manager.graph_updated.connect(self.dashboard.update_graph)
-        self.ros_manager.graph_updated.connect(self.nodes_page.update_nodes)
-        self.ros_manager.graph_updated.connect(self.topics_page.update_topics)
+        self.ros_manager.graph_updated.connect(self._refresh_graph)
 
         # Topic stats -> Topics page.
-        self.topic_monitor.topic_stats.connect(self.topics_page.update_topic_stats)
+        self.topic_monitor.topic_stats.connect(self._refresh_topic_stats)
 
         # Vehicle state -> Dashboard + Vehicle page.
-        self.vehicle_state.vehicle_updated.connect(self.dashboard.update_vehicle)
-        self.vehicle_state.vehicle_updated.connect(self.vehicle_page.update_vehicle)
-        self.vehicle_state.control_updated.connect(self.dashboard.update_control)
-        self.vehicle_state.control_updated.connect(self.vehicle_page.update_control)
-        self.vehicle_state.system_state_updated.connect(self.dashboard.update_subsystem_status)
-        self.vehicle_state.system_state_updated.connect(self.mission_page.update_system_state)
+        # Payload-free signals: pull a snapshot in the GUI thread rather than
+        # passing Python dicts across the rclpy spin thread (PySide6 crash).
+        self.vehicle_state.vehicle_updated.connect(self._refresh_vehicle)
+        self.vehicle_state.control_updated.connect(self._refresh_control)
+        self.vehicle_state.system_state_updated.connect(self._refresh_system)
 
         # Dashboard controls.
         self.dashboard.start_sim_requested.connect(self._on_start_sim)
@@ -121,6 +118,31 @@ class MainWindow(QMainWindow):
             self.topic_monitor.register_topics(MONITORED_TOPICS)
             self.topic_monitor.start()
             self.vehicle_state.start()
+
+    # --- Snapshot pull-back (GUI thread) --------------------------------
+    def _refresh_graph(self):
+        graph = self.ros_manager.last_graph()
+        self.dashboard.update_graph(graph)
+        self.nodes_page.update_nodes(graph)
+        self.topics_page.update_topics(graph)
+
+    def _refresh_topic_stats(self):
+        self.topics_page.update_topic_stats(self.topic_monitor.last_snapshot())
+
+    def _refresh_vehicle(self):
+        state = self.vehicle_state.snapshot_vehicle()
+        self.dashboard.update_vehicle(state)
+        self.vehicle_page.update_vehicle(state)
+
+    def _refresh_control(self):
+        control = self.vehicle_state.snapshot_control()
+        self.dashboard.update_control(control)
+        self.vehicle_page.update_control(control)
+
+    def _refresh_system(self):
+        system = self.vehicle_state.snapshot_system()
+        self.dashboard.update_subsystem_status(system)
+        self.mission_page.update_system_state(system)
 
     # --- Simulator process control --------------------------------------
     def _on_start_sim(self):

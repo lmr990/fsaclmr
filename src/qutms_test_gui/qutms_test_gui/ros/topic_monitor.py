@@ -13,6 +13,15 @@ from dataclasses import dataclass, field
 from typing import Dict
 
 from PySide6.QtCore import QObject, Signal
+from rclpy.qos import QoSHistoryPolicy, QoSProfile, QoSReliabilityPolicy
+
+# Publishers in this stack use best-effort; a reliable subscription would
+# never match them (and would report 0 Hz for every topic).
+_MONITOR_QOS = QoSProfile(
+    reliability=QoSReliabilityPolicy.BEST_EFFORT,
+    history=QoSHistoryPolicy.KEEP_LAST,
+    depth=10,
+)
 
 from qutms_test_gui.logger import setup_logger
 
@@ -42,12 +51,15 @@ class TopicMonitor(QObject):
         topic_stats(dict): per-topic statistics keyed by topic name.
     """
 
-    topic_stats = Signal(dict)
+    # Payload-free: see ros_manager/vehicle_state for the PySide6 crash.
+    topic_stats = Signal()
 
     def __init__(self, ros_manager):
         super().__init__()
         self._ros = ros_manager
         self._subscriptions = {}  # topic_name -> rclpy subscription
+        self._stats_lock = threading.Lock()
+        self._last_snapshot = {}
         self._stats: Dict[str, TopicStats] = {}
         self._lock = threading.Lock()
         self._report_thread = None
@@ -75,7 +87,7 @@ class TopicMonitor(QObject):
             try:
                 msg_type = self._import_type(stats.msg_type)
                 sub = self._ros.node.create_subscription(
-                    msg_type, name, self._make_callback(name), 10
+                    msg_type, name, self._make_callback(name), _MONITOR_QOS
                 )
                 self._subscriptions[name] = sub
                 logger.info("Monitoring topic %s (%s)", name, stats.msg_type)
@@ -141,7 +153,14 @@ class TopicMonitor(QObject):
                         if stats.last_time > 0
                         else None,
                     }
-            self.topic_stats.emit(snapshot)
+            with self._stats_lock:
+                self._last_snapshot = snapshot
+            self.topic_stats.emit()
+
+    def last_snapshot(self) -> dict:
+        """Most recent per-topic statistics (read from the GUI thread)."""
+        with self._stats_lock:
+            return dict(self._last_snapshot)
 
     @staticmethod
     def _import_type(dotted_path: str):

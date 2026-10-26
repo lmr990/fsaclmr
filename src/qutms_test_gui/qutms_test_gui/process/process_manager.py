@@ -31,7 +31,8 @@ class ProcessManager(QObject):
     state_changed = Signal(str)  # STARTING | RUNNING | STOPPED | ERROR
     stdout_line = Signal(str)
     stderr_line = Signal(str)
-    process_info = Signal(dict)
+    # Payload-free: see ros_manager/vehicle_state for the PySide6 crash.
+    process_info = Signal()
 
     def __init__(self):
         super().__init__()
@@ -173,12 +174,4 @@ class ProcessManager(QObject):
                 self.stderr_line.emit(line)
 
     def _emit_info(self):
-        self.process_info.emit(
-            {
-                "pid": self._info.pid,
-                "running": self._info.running,
-                "start_time": self._info.start_time,
-                "exit_code": self._info.exit_code,
-                "exit_status": self._info.exit_status,
-            }
-        )
+        self.process_info.emit()

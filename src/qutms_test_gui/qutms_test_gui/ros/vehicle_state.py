@@ -19,6 +19,15 @@ import threading
 import time
 
 from PySide6.QtCore import QObject, Signal
+from rclpy.qos import QoSHistoryPolicy, QoSProfile, QoSReliabilityPolicy
+
+# The stack's publishers (controllers, planners) use best-effort QoS; a
+# reliable subscription would never match them.
+_MONITOR_QOS = QoSProfile(
+    reliability=QoSReliabilityPolicy.BEST_EFFORT,
+    history=QoSHistoryPolicy.KEEP_LAST,
+    depth=10,
+)
 
 from qutms_test_gui.logger import setup_logger
 
@@ -38,9 +47,12 @@ VEHICLE_TOPICS = [
 class VehicleState(QObject):
     """Subscribes to vehicle state topics and emits GUI-friendly snapshots."""
 
-    vehicle_updated = Signal(dict)
-    control_updated = Signal(dict)
-    system_state_updated = Signal(dict)
+    # Payload-free signals: passing Python objects across the rclpy spin
+    # thread into Qt corrupts CPython refcounts under PySide6 (fatal
+    # "none_dealloc" crash). The GUI thread pulls snapshots instead.
+    vehicle_updated = Signal()
+    control_updated = Signal()
+    system_state_updated = Signal()
 
     STALE_THRESHOLD_SEC = 1.0
 
@@ -84,7 +96,7 @@ class VehicleState(QObject):
             try:
                 msg_type = self._import_type(type_path)
                 cb = self._make_callback(topic)
-                sub = self._ros.node.create_subscription(msg_type, topic, cb, 10)
+                sub = self._ros.node.create_subscription(msg_type, topic, cb, _MONITOR_QOS)
                 self._subs[topic] = sub
                 logger.info("Subscribed to %s", topic)
             except Exception as exc:
@@ -117,13 +129,13 @@ class VehicleState(QObject):
         with self._lock:
             self._state["velocity"] = float(msg.data)
             self._state["last_vehicle_update"] = time.time()
-            self.vehicle_updated.emit(dict(self._state))
+        self.vehicle_updated.emit()
 
     def _on_steering(self, msg):
         with self._lock:
             self._state["steering"] = float(msg.data)
             self._state["last_vehicle_update"] = time.time()
-            self.vehicle_updated.emit(dict(self._state))
+        self.vehicle_updated.emit()
 
     def _on_odometry(self, msg):
         q = msg.pose.pose.orientation
@@ -133,7 +145,7 @@ class VehicleState(QObject):
             self._state["y"] = msg.pose.pose.position.y
             self._state["yaw"] = yaw
             self._state["last_vehicle_update"] = time.time()
-            self.vehicle_updated.emit(dict(self._state))
+        self.vehicle_updated.emit()
 
     def _on_driving_command(self, msg):
         with self._lock:
@@ -141,14 +153,14 @@ class VehicleState(QObject):
             self._control["speed"] = float(msg.drive.speed)
             self._control["acceleration"] = float(msg.drive.acceleration)
             self._control["last_control_update"] = time.time()
-            self.control_updated.emit(dict(self._control))
+        self.control_updated.emit()
 
     def _on_av_state(self, msg):
         with self._lock:
             self._system["av_mode"] = int(msg.mode)
             self._system["av_state"] = int(msg.state)
             self._system["mission"] = int(msg.mission)
-            self.system_state_updated.emit(dict(self._system))
+        self.system_state_updated.emit()
 
     def _on_ros_state(self, msg):
         with self._lock:
@@ -158,7 +170,19 @@ class VehicleState(QObject):
             self._system["sbg_operational"] = bool(msg.sbg_operational)
             self._system["finished"] = bool(msg.finished)
             self._system["lap_count"] = int(msg.lap_count)
-            self.system_state_updated.emit(dict(self._system))
+        self.system_state_updated.emit()
+
+    def snapshot_vehicle(self) -> dict:
+        with self._lock:
+            return dict(self._state)
+
+    def snapshot_control(self) -> dict:
+        with self._lock:
+            return dict(self._control)
+
+    def snapshot_system(self) -> dict:
+        with self._lock:
+            return dict(self._system)
 
     @staticmethod
     def _import_type(dotted_path: str):

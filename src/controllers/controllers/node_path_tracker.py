@@ -34,7 +34,7 @@ from rclpy.node import Node
 
 from ackermann_msgs.msg import AckermannDriveStamped
 from driverless_msgs.msg import PathWithSpeeds, Reset, Shutdown
-from driverless_common.common import QOS_LATEST, wrap_to_pi, yaw
+from driverless_common.common import QOS_COMMAND, QOS_LATEST, wrap_to_pi, yaw
 from std_msgs.msg import Float32
 
 
@@ -118,7 +118,7 @@ class PathTracker(Node):
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
         self.cmd_pub = self.create_publisher(
-            AckermannDriveStamped, g("cmd_topic"), QOS_LATEST
+            AckermannDriveStamped, g("cmd_topic"), QOS_COMMAND
         )
         self.create_subscription(
             PathWithSpeeds, g("path_topic"), self.path_callback, QOS_LATEST
