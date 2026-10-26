@@ -22,3 +22,6 @@ TCone-YOLO-main/runs/
 *.swp
 .vscode/
 .idea/
+
+# GUI / runtime logs
+logs/
