@@ -12,6 +12,7 @@ at a fixed rate so the path tracker's freshness timeout is satisfied even
 when cone map updates are slow.
 """
 
+import time
 from math import pi
 
 import numpy as np
@@ -94,6 +95,9 @@ class UrinayPathBridge(Node):
         self.declare_parameter("path_topic", "/planning/midline_path")
         self.declare_parameter("path_with_speeds_topic", "/planning/path_with_speeds")
         self.declare_parameter("publish_rate", 10.0)
+        # Stop republishing when urinay stops producing paths: the planner can
+        # exit (loop closure, crash) and a stale path would keep driving the car.
+        self.declare_parameter("path_timeout_sec", 1.0)
 
         # three-pass speed profile parameters (same defaults as ft_planner.yaml)
         self.declare_parameter("speed_profile.speed_cap", 6.0)
@@ -129,6 +133,7 @@ class UrinayPathBridge(Node):
         # latest centerline received from urinay (full overrides partial)
         self.centerline: np.ndarray = None
         self.source_stamp = None
+        self.last_rx_mono = None
 
         partial_topic = self.get_parameter("partial_topic").value
         full_topic = self.get_parameter("full_topic").value
@@ -160,9 +165,16 @@ class UrinayPathBridge(Node):
             return
         self.centerline = np.array([[p.x, p.y] for p in msg.path])
         self.source_stamp = msg.header.stamp
+        self.last_rx_mono = time.monotonic()
 
     def publish_latest(self):
         if self.centerline is None:
+            return
+        if self.last_rx_mono is not None and (
+            time.monotonic() - self.last_rx_mono > float(self.get_parameter("path_timeout_sec").value)
+        ):
+            # Upstream went silent: stop publishing so the tracker's own
+            # staleness check brings the car to a safe stop.
             return
 
         if len(self.centerline) >= self.min_spline_points:

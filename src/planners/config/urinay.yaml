@@ -15,6 +15,7 @@ urinay_path_bridge_node:
     path_topic: /planning/midline_path
     path_with_speeds_topic: /planning/path_with_speeds
     publish_rate: 10.0
+    path_timeout_sec: 1.0
     curvature_smoothing_window: 3
     velocity_topic: /vehicle/velocity
     use_velocity_seed: true
