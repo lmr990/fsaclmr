@@ -23,6 +23,7 @@ def generate_launch_description():
     gazebo_gui = LaunchConfiguration("gazebo_gui")
     tcone_yolo_path = LaunchConfiguration("tcone_yolo_path")
     use_sim_time = LaunchConfiguration("use_sim_time")
+    planner = LaunchConfiguration("planner")
 
     # ---- EUFS simulation (camera enabled, lidar/laserscan disabled) ----
     simulation = IncludeLaunchDescription(
@@ -56,6 +57,7 @@ def generate_launch_description():
         launch_arguments={
             "use_sim_time": use_sim_time,
             "tcone_yolo_path": tcone_yolo_path,
+            "planner": planner,
         }.items(),
     )
 
@@ -76,6 +78,11 @@ def generate_launch_description():
                 "tcone_yolo_path",
                 default_value=os.path.expanduser("~/qutms_ws/src/TCone-YOLO-main"),
                 description="Absolute path to the TCone-YOLO repository root",
+            ),
+            DeclareLaunchArgument(
+                "planner",
+                default_value="urinay",
+                description="Path planner: urinay (color-blind Delaunay) or ft (FaSTTUBe)",
             ),
             simulation,
             yolo_autonomous,

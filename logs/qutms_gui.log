@@ -1,0 +1,69 @@
+2026-10-26 16:51:39,992 [INFO] qutms_test_gui: Starting QUTMS x EUFS test GUI
+2026-10-26 16:51:40,055 [INFO] qutms_test_gui.main_window: Starting ROS2 manager
+2026-10-26 16:51:40,055 [INFO] qutms_test_gui.main_window: Starting ROS2 manager
+2026-10-26 16:51:40,411 [INFO] qutms_test_gui.ros_manager: ROS2 connected
+2026-10-26 16:51:40,411 [INFO] qutms_test_gui.ros_manager: ROS2 connected
+2026-10-26 16:51:40,437 [INFO] qutms_test_gui.topic_monitor: Monitoring topic /vehicle/velocity (std_msgs.msg.Float32)
+2026-10-26 16:51:40,437 [INFO] qutms_test_gui.topic_monitor: Monitoring topic /vehicle/velocity (std_msgs.msg.Float32)
+2026-10-26 16:51:40,438 [INFO] qutms_test_gui.topic_monitor: Monitoring topic /vehicle/steering_angle (std_msgs.msg.Float32)
+2026-10-26 16:51:40,438 [INFO] qutms_test_gui.topic_monitor: Monitoring topic /vehicle/steering_angle (std_msgs.msg.Float32)
+2026-10-26 16:51:40,473 [INFO] qutms_test_gui.topic_monitor: Monitoring topic /odometry/sbg_ekf (nav_msgs.msg.Odometry)
+2026-10-26 16:51:40,473 [INFO] qutms_test_gui.topic_monitor: Monitoring topic /odometry/sbg_ekf (nav_msgs.msg.Odometry)
+2026-10-26 16:51:40,495 [INFO] qutms_test_gui.topic_monitor: Monitoring topic /control/driving_command (ackermann_msgs.msg.AckermannDriveStamped)
+2026-10-26 16:51:40,495 [INFO] qutms_test_gui.topic_monitor: Monitoring topic /control/driving_command (ackermann_msgs.msg.AckermannDriveStamped)
+2026-10-26 16:51:40,501 [INFO] qutms_test_gui.topic_monitor: Monitoring topic /system/av_state (driverless_msgs.msg.AVStateStamped)
+2026-10-26 16:51:40,501 [INFO] qutms_test_gui.topic_monitor: Monitoring topic /system/av_state (driverless_msgs.msg.AVStateStamped)
+2026-10-26 16:51:40,502 [INFO] qutms_test_gui.topic_monitor: Monitoring topic /system/ros_state (driverless_msgs.msg.ROSStateStamped)
+2026-10-26 16:51:40,502 [INFO] qutms_test_gui.topic_monitor: Monitoring topic /system/ros_state (driverless_msgs.msg.ROSStateStamped)
+2026-10-26 16:51:40,503 [INFO] qutms_test_gui.vehicle_state: Subscribed to /vehicle/velocity
+2026-10-26 16:51:40,503 [INFO] qutms_test_gui.vehicle_state: Subscribed to /vehicle/velocity
+2026-10-26 16:51:40,504 [INFO] qutms_test_gui.vehicle_state: Subscribed to /vehicle/steering_angle
+2026-10-26 16:51:40,504 [INFO] qutms_test_gui.vehicle_state: Subscribed to /vehicle/steering_angle
+2026-10-26 16:51:40,505 [INFO] qutms_test_gui.vehicle_state: Subscribed to /odometry/sbg_ekf
+2026-10-26 16:51:40,505 [INFO] qutms_test_gui.vehicle_state: Subscribed to /odometry/sbg_ekf
+2026-10-26 16:51:40,505 [INFO] qutms_test_gui.vehicle_state: Subscribed to /control/driving_command
+2026-10-26 16:51:40,505 [INFO] qutms_test_gui.vehicle_state: Subscribed to /control/driving_command
+2026-10-26 16:51:40,506 [INFO] qutms_test_gui.vehicle_state: Subscribed to /system/av_state
+2026-10-26 16:51:40,506 [INFO] qutms_test_gui.vehicle_state: Subscribed to /system/av_state
+2026-10-26 16:51:40,507 [INFO] qutms_test_gui.vehicle_state: Subscribed to /system/ros_state
+2026-10-26 16:51:40,507 [INFO] qutms_test_gui.vehicle_state: Subscribed to /system/ros_state
+2026-10-26 16:51:51,448 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: 
+2026-10-26 16:51:51,448 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: 
+2026-10-26 16:51:51,949 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:51,949 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:52,421 [ERROR] qutms_test_gui.ros_manager: graph poll error: Failed to get node names: rcl node's context is invalid, at ./src/rcl/node.c:428
+2026-10-26 16:51:52,421 [ERROR] qutms_test_gui.ros_manager: graph poll error: Failed to get node names: rcl node's context is invalid, at ./src/rcl/node.c:428
+2026-10-26 16:51:52,450 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:52,450 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:52,951 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:52,951 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:53,452 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:53,452 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:53,953 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:53,953 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:54,422 [ERROR] qutms_test_gui.ros_manager: graph poll error: Failed to get node names: rcl node's context is invalid, at ./src/rcl/node.c:428
+2026-10-26 16:51:54,422 [ERROR] qutms_test_gui.ros_manager: graph poll error: Failed to get node names: rcl node's context is invalid, at ./src/rcl/node.c:428
+2026-10-26 16:51:54,454 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:54,454 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:54,955 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:54,955 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:55,456 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:55,456 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:55,957 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:55,957 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:56,422 [ERROR] qutms_test_gui.ros_manager: graph poll error: Failed to get node names: rcl node's context is invalid, at ./src/rcl/node.c:428
+2026-10-26 16:51:56,422 [ERROR] qutms_test_gui.ros_manager: graph poll error: Failed to get node names: rcl node's context is invalid, at ./src/rcl/node.c:428
+2026-10-26 16:51:56,460 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:56,460 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:56,961 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:56,961 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:57,462 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:57,462 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:57,963 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:57,963 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:58,423 [ERROR] qutms_test_gui.ros_manager: graph poll error: Failed to get node names: rcl node's context is invalid, at ./src/rcl/node.c:428
+2026-10-26 16:51:58,423 [ERROR] qutms_test_gui.ros_manager: graph poll error: Failed to get node names: rcl node's context is invalid, at ./src/rcl/node.c:428
+2026-10-26 16:51:58,464 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:58,464 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:58,965 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67
+2026-10-26 16:51:58,965 [ERROR] qutms_test_gui.ros_manager: rclpy spin error: failed to create timer: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/guard_condition.c:67

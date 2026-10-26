@@ -132,9 +132,10 @@ class MainWindow(QMainWindow):
         track = self.dashboard.track
         if mode == self.dashboard.MODE_YOLO_AUTONOMOUS:
             yolo_path = self.dashboard.tcone_yolo_path
+            planner = self.dashboard.planner
             logger.info(
-                "Starting YOLO autonomous loop (track=%s, tcone_yolo_path=%s)",
-                track, yolo_path,
+                "Starting YOLO autonomous loop (track=%s, planner=%s, tcone_yolo_path=%s)",
+                track, planner, yolo_path,
             )
             self.process_manager.start(
                 "ros2",
@@ -143,6 +144,7 @@ class MainWindow(QMainWindow):
                     "qutms_eufs_bridge",
                     "yolo_autonomous_loop.launch.py",
                     f"track:={track}",
+                    f"planner:={planner}",
                     f"tcone_yolo_path:={yolo_path}",
                 ],
             )

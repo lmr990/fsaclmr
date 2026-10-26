@@ -88,6 +88,15 @@ class DashboardPage(QWidget):
         mode_layout.addWidget(self.cmb_launch_mode)
         sys_layout.addLayout(mode_layout)
 
+        # Planner selector (YOLO autonomous mode only).
+        planner_layout = QHBoxLayout()
+        planner_layout.addWidget(QLabel("Planner:"))
+        self.cmb_planner = QComboBox()
+        self.cmb_planner.addItem("Urinay (color-blind)", "urinay")
+        self.cmb_planner.addItem("FaSTTUBe (ft)", "ft")
+        planner_layout.addWidget(self.cmb_planner)
+        sys_layout.addLayout(planner_layout)
+
         # Track selector (Chinese names).
         track_layout = QHBoxLayout()
         track_layout.addWidget(QLabel("赛道:"))
@@ -102,7 +111,7 @@ class DashboardPage(QWidget):
         path_layout.addWidget(QLabel("YOLO path:"))
         self.txt_yolo_path = QLineEdit()
         self.txt_yolo_path.setPlaceholderText("/path/to/TCone-YOLO-main")
-        self.txt_yolo_path.setText("~/src10.22/src/TCone-YOLO-main")
+        self.txt_yolo_path.setText("~/qutms_ws/src/TCone-YOLO-main")
         path_layout.addWidget(self.txt_yolo_path)
         sys_layout.addLayout(path_layout)
 
@@ -263,10 +272,16 @@ class DashboardPage(QWidget):
         """Return the currently selected track's English identifier."""
         return self.cmb_track.currentData()
 
+    @property
+    def planner(self) -> str:
+        """Return the selected path planner: 'urinay' or 'ft'."""
+        return self.cmb_planner.currentData()
+
     def _on_mode_changed(self, _index: int):
-        """Enable/disable the YOLO path field based on the selected mode."""
+        """Enable/disable mode-dependent widgets."""
         is_yolo = self.launch_mode == self.MODE_YOLO_AUTONOMOUS
         self.txt_yolo_path.setEnabled(is_yolo)
+        self.cmb_planner.setEnabled(is_yolo)
         if not is_yolo:
             self.txt_yolo_path.setStyleSheet(
                 "color: gray; background-color: #f0f0f0;"
