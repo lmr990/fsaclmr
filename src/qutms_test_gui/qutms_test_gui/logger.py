@@ -42,18 +42,39 @@ def get_log_signal() -> LogSignal:
     return _log_signal
 
 
-def setup_logger(name: str = "qutms_test_gui", log_dir: str = "logs") -> logging.Logger:
+def _workspace_log_dir() -> str:
+    """<workspace>/logs, independent of the GUI process's cwd.
+
+    The GUI is often launched from the home directory; a relative ``logs``
+    would silently scatter log files per-cwd. Falls back to ``logs`` when
+    the workspace root (the directory owning install/ and src/) cannot be
+    found."""
+    import pathlib
+
+    for parent in pathlib.Path(__file__).resolve().parents:
+        if (parent / "install").is_dir() and (parent / "src").is_dir():
+            return str(parent / "logs")
+    return "logs"
+
+
+def setup_logger(name: str = "qutms_test_gui", log_dir: str = "") -> logging.Logger:
     """Configure and return the package logger.
 
     Logs go to:
       * console (stderr)
-      * file at <log_dir>/qutms_gui.log
+      * file at <workspace>/logs/qutms_gui.log (cwd-independent)
       * Qt signal consumed by the GUI Logs page
     """
+    if not log_dir:
+        log_dir = _workspace_log_dir()
     logger = logging.getLogger(name)
     if logger.handlers:
         return logger
 
+    # Module loggers are children of the "qutms_test_gui" logger; without this
+    # every record is written once by the child's handlers and once more by the
+    # parent's, doubling the log file and GUI output.
+    logger.propagate = False
     logger.setLevel(logging.DEBUG)
     fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 

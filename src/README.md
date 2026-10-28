@@ -5,7 +5,7 @@
 本 `src/` 目录包含 QUTMS Driverless 自动驾驶系统与 EUFS Simulator 仿真环境的全部 ROS2 包。
 将此目录复制到 ROS2 工作区后，编译即可使用。
 
-## 2. 包清单（28 个）
+## 2. 包清单
 
 ### 仿真环境（7 个）
 
@@ -70,6 +70,16 @@
 |------|---------|------|
 | qutms_eufs_bridge | ament_python | QUTMS↔eufs 桥接 launch 包 |
 | qutms_test_gui | ament_python | 测试管理 GUI（PySide6 + rclpy） |
+
+### 视觉感知与规划（3 个）
+
+| 包名 | 构建类型 | 说明 |
+|------|---------|------|
+| yolo_cone_detection | ament_python | ZED RGB/深度 + TCone-YOLO → 锥桶检测（含 TF 投影） |
+| cone_mapping | ament_python | 多帧锥桶融合、颜色投票、过期淘汰 |
+| urinay | ament_cmake (C++) | Delaunay 三角化 + 树搜索规划器，输出 PathLimits |
+
+> ZED 相机相关的 `zed-ros2-*` 为第三方子模块，不计入上表。
 
 ## 3. 环境要求
 
@@ -138,9 +148,17 @@ GUI 打开后：
 #### 方式 B：命令行启动
 
 ```bash
-# 终端 1
+# 终端 1：最小控制闭环
 ros2 launch qutms_eufs_bridge minimal_control_loop.launch.py
+
+# 或：YOLO 视觉自动驾驶闭环（planner: urinay | ft）
+ros2 launch qutms_eufs_bridge yolo_autonomous_loop.launch.py \
+  track:=small_oval planner:=urinay
 ```
+
+`tcone_yolo_path` 默认为空，YOLO 节点会自动查找：`QUTMS_TCONE_YOLO_PATH` 环境变量
+→ 当前工作目录/包所在工作区的 `src/TCone-YOLO-main` → `~/qutms_ws/src/TCone-YOLO-main`。
+也可显式传入 `tcone_yolo_path:=/abs/path/to/TCone-YOLO-main`。
 
 ### 4.5 测试车辆运动
 
@@ -209,13 +227,36 @@ source install/setup.bash
   /odometry/sbg_ekf (Odometry)         → 车辆位姿
 ```
 
+## 6.1 YOLO 视觉闭环数据流
+
+```
+ZED2i RGB + depth
+      │
+yolo_cone_detection/yolo_detector_node      → slam/cone_detection
+      │  （RGB/深度按时间戳配对，TF 用图像时间戳）
+cone_mapping/cone_mapper_node               → /mapping/cone_map
+      │  （多帧融合 + 颜色投票 + 输入静默超时）
+planners/cone_id_mapper_node                → /urinay/cone_map
+      │  （去重 + 全局最近邻 ID 关联）
+urinay_exec (C++)                           → /AS/P/pathlimits/{partial,full}
+      │
+planners/urinay_path_bridge_node            → /planning/path_with_speeds
+      │  （周期样条 + 三段速度规划）
+controllers/path_tracker_node               → /control/driving_command
+      │
+controllers/safety_watchdog_node            → 路径/TF 超时急停
+```
+
+规划器可切换：`planner:=urinay`（默认，颜色无关）或 `planner:=ft`（FaSTTUBe，
+基于蓝/黄锥桶边界）。两者都经过 [planners/config](planners/config) 中的参数配置。
+
 ## 7. GUI 功能说明
 
 GUI 包含 6 个页面：
 
 | 页面 | 功能 |
 |------|------|
-| Dashboard | 仿真控制（启动/停止/重启）、任务控制、车辆状态、ROS2 状态 |
+| Dashboard | 仿真控制（启动/停止/重启，YOLO 模式可选规划器与 YOLO 路径）、任务控制、车辆状态、ROS2 状态 |
 | Nodes | 实时 ROS2 节点列表 |
 | Topics | 实时 Topic 列表（名称、类型、发布/订阅数、频率） |
 | Vehicle | 车辆状态 + 控制指令（含 STALE 检测） |

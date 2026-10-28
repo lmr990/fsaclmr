@@ -1,9 +1,11 @@
 """Dashboard page: system control, mission control, vehicle state, ROS2 status."""
 
+import os
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QComboBox, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton,
-    QVBoxLayout, QWidget, QGridLayout
+    QComboBox, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+    QPushButton, QVBoxLayout, QWidget, QGridLayout
 )
 
 from qutms_test_gui.logger import setup_logger
@@ -110,8 +112,9 @@ class DashboardPage(QWidget):
         path_layout = QHBoxLayout()
         path_layout.addWidget(QLabel("YOLO path:"))
         self.txt_yolo_path = QLineEdit()
-        self.txt_yolo_path.setPlaceholderText("/path/to/TCone-YOLO-main")
-        self.txt_yolo_path.setText("~/qutms_ws/src/TCone-YOLO-main")
+        # Empty = auto-detect in the YOLO node (env var / workspace-relative).
+        self.txt_yolo_path.setPlaceholderText("留空自动检测 (/path/to/TCone-YOLO-main)")
+        self.txt_yolo_path.setText(os.environ.get("QUTMS_TCONE_YOLO_PATH", ""))
         path_layout.addWidget(self.txt_yolo_path)
         sys_layout.addLayout(path_layout)
 
@@ -263,8 +266,7 @@ class DashboardPage(QWidget):
 
     @property
     def tcone_yolo_path(self) -> str:
-        """Return the TCone-YOLO path with ~ expanded."""
-        import os
+        """Return the TCone-YOLO path with ~ expanded (empty = auto-detect)."""
         return os.path.expanduser(self.txt_yolo_path.text().strip())
 
     @property

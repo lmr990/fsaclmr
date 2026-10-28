@@ -159,17 +159,18 @@ class MainWindow(QMainWindow):
                 "Starting YOLO autonomous loop (track=%s, planner=%s, tcone_yolo_path=%s)",
                 track, planner, yolo_path,
             )
-            self.process_manager.start(
-                "ros2",
-                [
-                    "launch",
-                    "qutms_eufs_bridge",
-                    "yolo_autonomous_loop.launch.py",
-                    f"track:={track}",
-                    f"planner:={planner}",
-                    f"tcone_yolo_path:={yolo_path}",
-                ],
-            )
+            args = [
+                "launch",
+                "qutms_eufs_bridge",
+                "yolo_autonomous_loop.launch.py",
+                f"track:={track}",
+                f"planner:={planner}",
+            ]
+            # An empty field means the YOLO node auto-detects its repository;
+            # passing "tcone_yolo_path:=" would override that with an empty path.
+            if yolo_path:
+                args.append(f"tcone_yolo_path:={yolo_path}")
+            self.process_manager.start("ros2", args)
         else:
             logger.info("Starting eufs simulator (minimal control loop, track=%s)", track)
             self.process_manager.start(
@@ -286,7 +287,8 @@ class MainWindow(QMainWindow):
     # --- Cleanup ---------------------------------------------------------
     def closeEvent(self, event):
         logger.info("Shutting down GUI")
-        self.process_manager.stop()
+        # Closing the window must not leave ros2 launch / gazebo / rviz running.
+        self.process_manager.shutdown()
         self.topic_monitor.stop()
         self.vehicle_state.stop()
         self.ros_manager.stop()

@@ -117,14 +117,23 @@ class RosManager(QObject):
 
     def _spin_loop(self):
         while self._running and self._node is not None:
+            # rclpy may already be shut down (e.g. GUI window closed while the
+            # context was still alive). spin_once on an invalid context raises
+            # forever, so leave instead of flooding the log at 2 Hz.
+            if not rclpy.ok():
+                break
             try:
                 rclpy.spin_once(self._node, timeout_sec=0.1)
             except Exception as exc:
                 logger.error("rclpy spin error: %s", exc)
+                if not rclpy.ok():
+                    break
                 time.sleep(0.5)
 
     def _poll_loop(self):
         while self._running and self._node is not None:
+            if not rclpy.ok():
+                break
             try:
                 self._last_graph = self._collect_graph()
                 self.graph_updated.emit()
