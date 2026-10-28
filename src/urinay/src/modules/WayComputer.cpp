@@ -122,8 +122,11 @@ void WayComputer::findNextEdges(std::vector<HeurInd> &nextEdges, const Trace *ac
       // 4. Remove any edge whose midpoint and lastPos are in the same side of actEdge (avoid bouncing on a track limit)
       (actTrace->size() >= 2 and Vector::pointBehind(actEdge->midPoint(), lastPos, actEdge->normal()) == Vector::pointBehind(actEdge->midPoint(), nextPossibleEdge.midPoint(), actEdge->normal())) or
 
-      // 5. Remove any edge whose track width is too small
+      // 5. Remove any edge whose track width is too small, or wider than the
+      //    real track (e.g. edges spanning across the infield of a small
+      //    track, which would let the search shortcut out of the corridor)
       (nextPossibleEdge.trackWidth(nextDir) < params.min_track_width) or
+      (params.max_track_width > 0.0 and nextPossibleEdge.trackWidth(nextDir) > params.max_track_width) or
 
       // 6. [Only before appending the edge that closes the loop] Remove any edge that is already contained in the path but is not the one that closes the loop
       (!actTrace->isLoopClosed() and !actTrace->closesLoopWith(nextPossibleEdge) and actTrace->containsEdge(nextPossibleEdge)) or

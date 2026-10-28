@@ -29,11 +29,16 @@ path_tracker_node:
     lookahead_kl: 1.8
     min_lookahead: 2.0
     max_lookahead: 8.0
+    # First/last path points closer than this are treated as a closed loop.
+    closed_path_gap_tol: 1.0
 
-    wheelbase: 1.5            # [m] keep in sync with the vehicle model
+    wheelbase: 1.580          # [m] keep in sync with wheels.urdf.xacro
 
-    # steering: command space is DEGREES, ±90 = full lock (EUFS plugin)
-    max_steering_deg: 40.0
+    # steering: the tracker works in physical wheel angles (rad); the EUFS
+    # plugin wants degrees where 90 deg = the physical lock (0.28 rad / 16 deg
+    # from configDry.yaml). cmd_deg = phys_deg * 90/16, hence the gain 5.625.
+    steer_cmd_gain: 5.625
+    max_steering_cmd_deg: 90.0
     curvature_ff_gain: 1.0    # set 0.0 if feedforward sign needs verifying on track
     slip_gain: 0.5
     steer_kp: 1.0             # with bias structure: 1.0 => output == target angle

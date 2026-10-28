@@ -161,6 +161,11 @@ class FaSTTUBeBoundaryExtractor(Node):
         self.cone_buffer_max_age = 15.0
         self.cone_merge_dist = 0.5
         self.last_detection_stamp = None
+        # Wall-clock input watch: if the detector/mapper stops publishing we
+        # must stop planning on the buffered cones instead of driving blind.
+        self.declare_parameter("detection_timeout_sec", 3.0)
+        self.detection_timeout = float(self.get_parameter("detection_timeout_sec").value)
+        self.last_detection_mono = None
 
         # cone input: cone_mapper output by default, raw detection topic still selectable
         self.declare_parameter("cone_topic", "/mapping/cone_map")
@@ -302,6 +307,10 @@ class FaSTTUBeBoundaryExtractor(Node):
 
     def detection_callback(self, track_msg: ConeDetectionStamped):
         self.last_detection_stamp = track_msg.header.stamp
+        # The mapper keeps republishing empty maps while the detector is alive;
+        # only a message with actual cones keeps the planning buffer fresh.
+        if track_msg.cones:
+            self.last_detection_mono = time.monotonic()
         now = self.get_clock().now().nanoseconds / 1e9
         for cone in track_msg.cones:
             cx, cy = cone.location.x, cone.location.y
@@ -327,6 +336,16 @@ class FaSTTUBeBoundaryExtractor(Node):
         self.initial_planning = False
 
     def planning_callback(self):
+        if (
+            self.last_detection_mono is None
+            or time.monotonic() - self.last_detection_mono > self.detection_timeout
+        ):
+            if self.cone_buffer:
+                self.cone_buffer.clear()
+                self.get_logger().warn("Cone input lost; clearing cone buffer")
+                self.initial_planning = False
+            return
+
         try:
             # TODO: parameterise these frames?
             map_to_base = self.tf_buffer.lookup_transform(self.map_frame, self.base_frame, rclpy.time.Time())

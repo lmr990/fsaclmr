@@ -135,20 +135,26 @@ class YoloInference:
             im_tensor = im_tensor[None]
         _t_h2d = time.perf_counter()
 
-        pred = self._model(im_tensor, augment=False, visualize=False)
-        if self._device.type == "cuda":
-            torch.cuda.synchronize()
-        _t_infer = time.perf_counter()
+        # Inference must not build an autograd graph: without this the node
+        # pays a large per-frame overhead (the benchmark in diagnostics/ uses
+        # no_grad and runs an order of magnitude faster). no_grad is used
+        # instead of inference_mode because the boxes are rounded in-place
+        # below, which inference tensors forbid outside the context.
+        with torch.no_grad():
+            pred = self._model(im_tensor, augment=False, visualize=False)
+            if self._device.type == "cuda":
+                torch.cuda.synchronize()
+            _t_infer = time.perf_counter()
 
-        pred = non_max_suppression(
-            pred,
-            self.conf_thres,
-            self.iou_thres,
-            classes=None,
-            agnostic=False,
-            max_det=self.max_det,
-        )
-        _t_nms = time.perf_counter()
+            pred = non_max_suppression(
+                pred,
+                self.conf_thres,
+                self.iou_thres,
+                classes=None,
+                agnostic=False,
+                max_det=self.max_det,
+            )
+            _t_nms = time.perf_counter()
 
         self._detect_count += 1
         if self._detect_count % 10 == 0:

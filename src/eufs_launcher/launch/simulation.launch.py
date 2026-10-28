@@ -283,6 +283,11 @@ def generate_launch_description():
                 default_value="false",
                 description="Condition to enable laserscan",
             ),
+            DeclareLaunchArgument(
+                name="rqt",
+                default_value="false",
+                description="Condition to launch the rqt control perspective",
+            ),
             TimerAction(
                 period=5.0,
                 actions=[
@@ -303,6 +308,7 @@ def generate_launch_description():
                 package="rqt_gui",
                 executable="rqt_gui",
                 output="screen",
+                condition=IfCondition(LaunchConfiguration("rqt")),
                 arguments=[
                     "--force-discover",
                     "--perspective-file",

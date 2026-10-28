@@ -1,21 +1,28 @@
 yolo_detector_node:
   ros__parameters:
-    # ---- Paths (adjust tcone_yolo_path to your workspace) ----
-    # Absolute path to the TCone-YOLO repository root.
-    tcone_yolo_path: "/home/lmr/qutms_ws/src/TCone-YOLO-main"
+    # ---- Paths ----
+    # Absolute path to the TCone-YOLO repository root. Leave empty to
+    # auto-detect (QUTMS_TCONE_YOLO_PATH, ~/qutms_ws/src, or the workspace
+    # containing this package), so copies of the workspace both work.
+    tcone_yolo_path: ""
 
     # Paths below are resolved relative to tcone_yolo_path if not absolute.
     weights: "compared-results/model/TCone-YOLO_model/weights/best.pt"
     data_yaml: "data/Cone.yaml"
 
     # ---- Inference ----
-    imgsz: 640
+    imgsz: 416
     conf_thres: 0.15
     iou_thres: 0.45
     max_det: 1000
-    # '' = auto-detect (CUDA if available, else CPU). Use 'cpu' to force CPU.
-    device: ""
-    half: false  # FP16; only effective on CUDA.
+    # Force CUDA; the GPU is shared with Gazebo's camera rendering so we
+    # also enable FP16 and lower the Gazebo camera rate/resolution to keep
+    # the CUDA queue short.
+    device: "cuda:0"
+    half: true  # FP16 on RTX 3060 ~2x faster, still accurate for cones
+    # Detection timer period [s]. Lower = higher detection rate, but inference
+    # takes ~0.1-0.3 s, so the timer self-paces and never queues frames.
+    process_period_sec: 0.1
 
     # ---- Output ----
     output_frame: "track"

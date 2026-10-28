@@ -62,12 +62,22 @@ class PathTracker(Node):
         self.declare_parameter("lookahead_kl", 1.8)
         self.declare_parameter("min_lookahead", 2.0)
         self.declare_parameter("max_lookahead", 8.0)
+        # If the first and last path points are this close [m], treat the path
+        # as a closed loop and wrap the lookahead index around the seam.
+        self.declare_parameter("closed_path_gap_tol", 1.0)
 
         # vehicle model
         self.declare_parameter("wheelbase", 1.5)
 
         # steering
-        self.declare_parameter("max_steering_deg", 40.0)  # command space, ±90 = full lock
+        # The EUFS plugin maps a 90 deg command onto the physical steering lock
+        # (0.28 rad / 16 deg, from configDry.yaml input_ranges.steering), i.e.
+        # cmd_deg = phys_deg * 90/16. Pure pursuit works in a physical wheel
+        # angle, so commands are scaled up by steer_cmd_gain and the steering
+        # feedback is scaled back down: without this the car is commanded to
+        # ~1/5.6 of the angle it needs and runs wide on every corner.
+        self.declare_parameter("steer_cmd_gain", 5.625)  # [cmd deg / phys deg]
+        self.declare_parameter("max_steering_cmd_deg", 90.0)  # command-space limit
         self.declare_parameter("curvature_ff_gain", 1.0)
         self.declare_parameter("slip_gain", 0.5)
         self.declare_parameter("steer_kp", 1.0)
@@ -87,8 +97,11 @@ class PathTracker(Node):
         self.kl = float(g("lookahead_kl"))
         self.min_lookahead = float(g("min_lookahead"))
         self.max_lookahead = float(g("max_lookahead"))
+        self.closed_gap_tol = float(g("closed_path_gap_tol"))
         self.wheelbase = float(g("wheelbase"))
-        self.max_steer_rad = math.radians(float(g("max_steering_deg")))
+        self.steer_cmd_gain = float(g("steer_cmd_gain"))
+        self.max_cmd_deg = float(g("max_steering_cmd_deg"))
+        self.max_steer_rad = math.radians(self.max_cmd_deg / self.steer_cmd_gain)
         self.ff_gain = float(g("curvature_ff_gain"))
         self.slip_gain = float(g("slip_gain"))
         self.kp = float(g("steer_kp"))
@@ -164,7 +177,9 @@ class PathTracker(Node):
         self.velocity = float(msg.data)
 
     def steering_callback(self, msg: Float32) -> None:
-        self.steer_meas_rad = math.radians(float(msg.data))
+        # Feedback is published by the plugin in command degrees; convert it
+        # back to a physical wheel angle so the PID acts on one unit system.
+        self.steer_meas_rad = math.radians(float(msg.data) / self.steer_cmd_gain)
 
     def vy_callback(self, msg: Float32) -> None:
         self.vy = float(msg.data)
@@ -214,15 +229,45 @@ class PathTracker(Node):
         d_sq = np.sum((points - np.array([x, y])) ** 2, axis=1)
         nearest = int(np.argmin(d_sq))
 
+        # A closed-loop path is published in one fixed winding order, but the
+        # car can be heading either way along it (e.g. after recovery). Walking
+        # the array forward from the nearest point would then put the lookahead
+        # point behind the car, and pure pursuit would hold full lock forever.
+        # An OPEN path (partial cone map) must only be followed forward: the
+        # car often sits past its last point, and walking backwards there makes
+        # the controller attempt a U-turn and leave the track.
+        n = len(points)
+        # Closed loops wrap around their seam. Without wrapping, the lookahead
+        # walk stops at the last sample and the target collapses onto the car
+        # whenever the nearest point is near the seam, causing a steering jerk.
+        closed_path = n >= 4 and float(
+            np.linalg.norm(points[0] - points[-1])
+        ) <= self.closed_gap_tol
+        if closed_path:
+            fwd = (nearest + 1) % n
+            bwd = (nearest - 1) % n
+            def _ahead(idx: int) -> float:
+                dx, dy = points[idx] - np.array([x, y])
+                return math.cos(heading) * dx + math.sin(heading) * dy
+            step = 1 if _ahead(fwd) >= _ahead(bwd) else -1
+        else:
+            step = 1
+
         # adaptive lookahead target: walk arc length from the nearest point
         lookahead = min(
             self.max_lookahead, max(self.min_lookahead, self.kv * self.velocity + self.kl)
         )
         target_idx = nearest
         accumulated = 0.0
-        for i in range(nearest, len(points) - 1):
-            accumulated += float(np.linalg.norm(points[i + 1] - points[i]))
-            target_idx = i + 1
+        i = nearest
+        max_steps = n if closed_path else n - 1
+        for _ in range(max_steps):
+            nxt = (i + step) % n if closed_path else i + step
+            if not closed_path and not (0 <= nxt < n):
+                break
+            accumulated += float(np.linalg.norm(points[nxt] - points[i]))
+            i = nxt
+            target_idx = i
             if accumulated >= lookahead:
                 break
 
@@ -237,6 +282,10 @@ class PathTracker(Node):
         delta = math.atan2(2.0 * self.wheelbase * math.sin(alpha), lookahead)
         if self.ff_gain > 0.0 and self.path_curvatures is not None:
             kappa = float(self.path_curvatures[target_idx])
+            # Curvature is defined in the path's forward winding; driving the
+            # path backwards flips the required steering sign.
+            if step < 0:
+                kappa = -kappa
             delta += self.ff_gain * math.atan(self.wheelbase * kappa)
 
         # slip-angle compensation (optional; needs a lateral velocity source)
@@ -256,7 +305,7 @@ class PathTracker(Node):
         self.cmd_speed = max(0.0, self.cmd_speed)
 
         self.publish_command(
-            steering_deg=math.degrees(delta),
+            steering_deg=math.degrees(delta) * self.steer_cmd_gain,
             speed=self.cmd_speed,
             stopping=self.cmd_speed < 0.05,
         )
@@ -294,7 +343,7 @@ class PathTracker(Node):
 
     # ------------------------------------------------------------------ #
     def publish_command(self, steering_deg: float, speed: float, stopping: bool = False) -> None:
-        steering_deg = max(-math.degrees(self.max_steer_rad), min(math.degrees(self.max_steer_rad), steering_deg))
+        steering_deg = max(-self.max_cmd_deg, min(self.max_cmd_deg, steering_deg))
         if stopping:
             self.cmd_speed = 0.0
 

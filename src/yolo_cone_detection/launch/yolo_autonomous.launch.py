@@ -25,14 +25,28 @@ from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
     use_sim_time = LaunchConfiguration("use_sim_time")
     tcone_yolo_path = LaunchConfiguration("tcone_yolo_path")
     planner = LaunchConfiguration("planner")
+    shadow_planner = LaunchConfiguration("shadow_planner")
     use_urinay = PythonExpression(["'", planner, "' == 'urinay'"])
     use_ft = PythonExpression(["'", planner, "' == 'ft'"])
+    # Shadow planner: the second chain runs with its output remapped to
+    # /shadow/<name>/... and an arbiter node logs how it would have driven.
+    # It never publishes to the control topics. Requires planner != shadow.
+    shadow_ft = PythonExpression(["'", shadow_planner, "' == 'ft' and '", planner, "' != 'ft'"])
+    shadow_urinay = PythonExpression(
+        ["'", shadow_planner, "' == 'urinay' and '", planner, "' != 'urinay'"]
+    )
+
+    # Track-dependent tuning: every track has its own width, so the urinay
+    # edge filter and the bridge corridor guard are adjustable per launch.
+    max_track_width = ParameterValue(LaunchConfiguration("max_track_width"), value_type=float)
+    corridor_max_dist = ParameterValue(LaunchConfiguration("corridor_max_dist"), value_type=float)
 
     # ---- YOLO detector ----
     yolo_params_file = os.path.join(
@@ -108,7 +122,10 @@ def generate_launch_description():
         condition=IfCondition(use_urinay),
         parameters=[
             os.path.join(get_package_share_path("urinay"), "config", "urinay.yaml"),
-            {"use_sim_time": use_sim_time},
+            {
+                "use_sim_time": use_sim_time,
+                "max_track_width": max_track_width,
+            },
         ],
     )
     urinay_path_bridge_node = Node(
@@ -119,7 +136,104 @@ def generate_launch_description():
         condition=IfCondition(use_urinay),
         parameters=[
             os.path.join(get_package_share_path("planners"), "config", "urinay.yaml"),
+            {
+                "use_sim_time": use_sim_time,
+                "corridor.max_dist_to_cone": corridor_max_dist,
+            },
+        ],
+    )
+
+    # ---- Shadow planner (never drives the car; observed by the arbiter) ----
+    ft_shadow_node = Node(
+        package="planners",
+        executable="ft_planner_node",
+        name="ft_planner_shadow",
+        output="screen",
+        condition=IfCondition(shadow_ft),
+        remappings=[
+            ("/planning/midline_path", "/shadow/ft/midline_path"),
+            ("/planning/path_with_speeds", "/shadow/ft/path_with_speeds"),
+            ("/planning/blue_bounds", "/shadow/ft/blue_bounds"),
+            ("/planning/yellow_bounds", "/shadow/ft/yellow_bounds"),
+        ],
+        parameters=[
+            os.path.join(get_package_share_path("planners"), "config", "ft_planner.yaml"),
             {"use_sim_time": use_sim_time},
+        ],
+    )
+    # Shadow urinay chain (only launched when ft is active, so the shared
+    # cone_id_mapper / pathlimits topics have no second active publisher).
+    cone_id_mapper_shadow_node = Node(
+        package="planners",
+        executable="cone_id_mapper_node",
+        name="cone_id_mapper_shadow",
+        output="screen",
+        condition=IfCondition(shadow_urinay),
+        parameters=[
+            os.path.join(get_package_share_path("planners"), "config", "urinay.yaml"),
+            {"use_sim_time": use_sim_time},
+        ],
+    )
+    urinay_shadow_node = Node(
+        package="urinay",
+        executable="urinay_exec",
+        name="urinay_shadow",
+        output="screen",
+        condition=IfCondition(shadow_urinay),
+        parameters=[
+            os.path.join(get_package_share_path("urinay"), "config", "urinay.yaml"),
+            {
+                "use_sim_time": use_sim_time,
+                "max_track_width": max_track_width,
+            },
+        ],
+    )
+    urinay_bridge_shadow_node = Node(
+        package="planners",
+        executable="urinay_path_bridge_node",
+        name="urinay_bridge_shadow",
+        output="screen",
+        condition=IfCondition(shadow_urinay),
+        parameters=[
+            os.path.join(get_package_share_path("planners"), "config", "urinay.yaml"),
+            {
+                "use_sim_time": use_sim_time,
+                "path_topic": "/shadow/urinay/midline_path",
+                "path_with_speeds_topic": "/shadow/urinay/path_with_speeds",
+                "corridor.max_dist_to_cone": corridor_max_dist,
+            },
+        ],
+    )
+    arbiter_ft_node = Node(
+        package="planners",
+        executable="planner_arbiter_node",
+        name="planner_arbiter",
+        output="screen",
+        condition=IfCondition(shadow_ft),
+        parameters=[
+            {
+                "use_sim_time": use_sim_time,
+                "active_name": "urinay",
+                "shadow_name": "ft",
+                "shadow_topic": "/shadow/ft/midline_path",
+                "track_name": LaunchConfiguration("track"),
+            }
+        ],
+    )
+    arbiter_urinay_node = Node(
+        package="planners",
+        executable="planner_arbiter_node",
+        name="planner_arbiter",
+        output="screen",
+        condition=IfCondition(shadow_urinay),
+        parameters=[
+            {
+                "use_sim_time": use_sim_time,
+                "active_name": "ft",
+                "shadow_name": "urinay",
+                "shadow_topic": "/shadow/urinay/midline_path",
+                "track_name": LaunchConfiguration("track"),
+            }
         ],
     )
 
@@ -156,13 +270,31 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "tcone_yolo_path",
-                default_value="/home/user/qutms_ws/src/TCone-YOLO-main",
-                description="Absolute path to TCone-YOLO repository root",
+                default_value="",
+                description="Absolute path to TCone-YOLO repo (empty = auto-detect)",
             ),
             DeclareLaunchArgument(
                 "planner",
                 default_value="urinay",
                 description="Path planner: urinay (color-blind Delaunay) or ft (FaSTTUBe)",
+            ),
+            DeclareLaunchArgument(
+                "shadow_planner",
+                default_value="",
+                description="Second planner to run in shadow mode ('ft'/'urinay', "
+                "must differ from planner); logs comparisons, never drives",
+            ),
+            DeclareLaunchArgument(
+                "max_track_width",
+                default_value="5.0",
+                description="Urinay max edge width [m] — set to the track's real "
+                "width + ~1.5 m margin when switching tracks",
+            ),
+            DeclareLaunchArgument(
+                "corridor_max_dist",
+                default_value="3.0",
+                description="Bridge corridor guard: max path-to-nearest-cone "
+                "distance [m] — set to the track's half width + ~1.5 m margin",
             ),
             yolo_node,
             cone_mapper_node,
@@ -170,6 +302,12 @@ def generate_launch_description():
             cone_id_mapper_node,
             urinay_node,
             urinay_path_bridge_node,
+            ft_shadow_node,
+            cone_id_mapper_shadow_node,
+            urinay_shadow_node,
+            urinay_bridge_shadow_node,
+            arbiter_ft_node,
+            arbiter_urinay_node,
             path_tracker_node,
             safety_watchdog_node,
         ]

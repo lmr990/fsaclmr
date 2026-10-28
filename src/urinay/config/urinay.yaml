@@ -24,18 +24,26 @@ urinay:
     marker_topics.treeSearch: /AS/P/urinay/markers/treeSearch
 
     # WayComputer
-    max_triangle_edge_len: 9.0
+    # 6.0 instead of the original 9.0: on small tracks the full cone map
+    # triangulates across the infield, and long edges there produce fake
+    # midpoints that pull the way out of the corridor (seen from lap 2 on).
+    max_triangle_edge_len: 6.0
     min_triangle_angle: 0.25
     failsafe_max_way_horizon_size: 6
     general_failsafe: true
     general_failsafe_safetyFactor: 1.4
 
     # WayComputer::Search
-    max_way_horizon_size: 0
+    # 12 instead of unlimited (0): cap how far the search extrapolates into
+    # the sparse frontier so it cannot walk off the mapped corridor.
+    max_way_horizon_size: 12
     tree_search_max_height: 7
     search_radius: 5.0
     max_angle_diff: 0.6
     min_track_width: 2.8
+    # Real track width is ~3-3.5 m on small_oval; cross-infield shortcut
+    # edges project much wider perpendicular to travel. 0 disables.
+    max_track_width: 5.0
     max_search_options: 2
     overnext_midpoint_angle: 0.2
     max_next_heuristic: 3.0

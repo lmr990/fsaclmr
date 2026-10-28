@@ -22,6 +22,7 @@ void Failsafe<T>::initGeneral(const T &params, const double &safetyFactor, const
   this->search_radius *= safetyFactor;
   this->max_angle_diff = std::min(this->max_angle_diff*safetyFactor, M_PI_2);
   this->min_track_width /= safetyFactor;
+  this->max_track_width *= safetyFactor;
   this->max_next_heuristic *= safetyFactor;
   this->overnext_midpoint_angle /= safetyFactor;
   this->allow_intersection = false;

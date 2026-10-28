@@ -27,6 +27,7 @@ setup(
             "ft_planner_node = planners.node_ft_planner:main",
             "cone_id_mapper_node = planners.node_cone_id_mapper:main",
             "urinay_path_bridge_node = planners.node_urinay_path_bridge:main",
+            "planner_arbiter_node = planners.node_planner_arbiter:main",
         ],
     },
 )

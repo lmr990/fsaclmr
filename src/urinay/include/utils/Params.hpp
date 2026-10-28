@@ -40,6 +40,11 @@ class Params {
       int tree_search_max_height;
       double overnext_midpoint_angle;
       double search_radius, max_angle_diff, min_track_width;
+      // Upper bound on an edge's width (extent perpendicular to the travel
+      // direction). Edges spanning e.g. across the infield of a small track
+      // project much wider than the real track and would let the search
+      // shortcut out of the corridor. 0 disables the filter.
+      double max_track_width;
       int max_search_options;
       double max_next_heuristic;
       float heur_dist_weight, heur_track_width_diff_weight;

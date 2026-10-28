@@ -7,6 +7,8 @@ cone_id_mapper_node:
     output_topic: /urinay/cone_map
     assoc_dist: 1.0
     dedupe_radius: 1.0
+    # Retire an id after this long without a matching detection [s].
+    id_ttl_sec: 5.0
 
 urinay_path_bridge_node:
   ros__parameters:
@@ -17,10 +19,26 @@ urinay_path_bridge_node:
     path_with_speeds_topic: /planning/path_with_speeds
     publish_rate: 10.0
     path_timeout_sec: 1.0
+    # First/last centerline points closer than this [m] are treated as a loop.
+    closed_loop_gap_tol: 1.5
+    # Corridor guard: drop the path tail once it strays farther than this
+    # from every mapped cone (the frontier bends off-track otherwise). The
+    # next centerline reconnects as new cones enter the map; the speed
+    # profile only brakes when the car genuinely runs out of path.
+    # extrapolate_len > 0 appends a straight segment instead of dropping.
+    corridor:
+      enabled: true
+      max_dist_to_cone: 3.0
+      extrapolate_len: 0.0
+      extrapolate_step: 0.5
+    cone_map_topic: /urinay/cone_map
     curvature_smoothing_window: 3
     velocity_topic: /vehicle/velocity
     use_velocity_seed: true
     speed_profile:
+      # Same 1.5 m/s cap as ft_planner so the two planners can be compared
+      # fairly (camera-only perception; raise both together after validating
+      # detection rate).
       speed_cap: 1.5
       max_lateral_acc: 3.0
       max_accel: 1.0

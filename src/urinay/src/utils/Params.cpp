@@ -54,6 +54,7 @@ Params::Params(rclcpp::Node *const node) {
   wayComputer.search.search_radius = getOrDeclare(node, "search_radius", 5.0);
   wayComputer.search.max_angle_diff = getOrDeclare(node, "max_angle_diff", 0.6);
   wayComputer.search.min_track_width = getOrDeclare(node, "min_track_width", 2.8);
+  wayComputer.search.max_track_width = getOrDeclare(node, "max_track_width", 0.0);
   wayComputer.search.max_search_options = getOrDeclare(node, "max_search_options", 2);
   wayComputer.search.overnext_midpoint_angle = getOrDeclare(node, "overnext_midpoint_angle", 0.2);
   wayComputer.search.max_next_heuristic = getOrDeclare(node, "max_next_heuristic", 3.0);

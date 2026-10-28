@@ -79,13 +79,17 @@
         <!-- Depth and Mono cam simulation -->
         <sensor name="stereo_depth" type="depth">
           <always_on>true</always_on>
-          <update_rate>30.0</update_rate>
+          <!-- Keep camera load off the GPU so it does not starve YOLO of
+               CUDA time. 10 Hz at 960x540 is more than enough for cone
+               detection (YOLO only needs ~5 Hz) and roughly halves the GPU
+               rendering cost vs 1280x720 @ 30 Hz. -->
+          <update_rate>10.0</update_rate>
           <visualize>false</visualize>
           <camera>
             <horizontal_fov>1.91986</horizontal_fov>
             <image>
-              <width>1280</width>
-              <height>720</height>
+              <width>960</width>
+              <height>540</height>
               <format>B8G8R8</format>
             </image>
             <depth_camera>

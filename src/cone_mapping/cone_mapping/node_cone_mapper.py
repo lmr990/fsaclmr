@@ -54,6 +54,10 @@ class ConeMapperNode(Node):
         self.declare_parameter("max_age_sec", 120.0)        # eviction age
         self.declare_parameter("max_cones", 0)              # 0 = unlimited
         self.declare_parameter("publish_rate", 10.0)        # [Hz]
+        # If the detector stops publishing entirely (node crash, camera
+        # stall), stop trusting the last map instead of republishing it
+        # forever. Wall clock, so a paused sim cannot mask the loss.
+        self.declare_parameter("input_timeout_sec", 2.0)
 
         input_topic = self.get_parameter("input_topic").value
         output_topic = self.get_parameter("output_topic").value
@@ -61,10 +65,13 @@ class ConeMapperNode(Node):
         self.min_observations = int(self.get_parameter("min_observations").value)
         self.max_age = float(self.get_parameter("max_age_sec").value)
         self.max_cones = int(self.get_parameter("max_cones").value)
+        self.input_timeout = float(self.get_parameter("input_timeout_sec").value)
 
         self.map_cones: list[MapCone] = []
         self.last_header = None
         self.detections_received = 0
+        self.last_detection_mono = None
+        self.input_lost = False
 
         self.create_subscription(
             ConeDetectionStamped, input_topic, self.detection_callback, QOS_LATEST
@@ -85,6 +92,8 @@ class ConeMapperNode(Node):
     # ------------------------------------------------------------------ #
     def detection_callback(self, msg: ConeDetectionStamped) -> None:
         self.last_header = msg.header
+        self.last_detection_mono = time.monotonic()
+        self.input_lost = False
         # node clock (respects use_sim_time) so ages survive sim replay
         now = self.get_clock().now().nanoseconds / 1e9
 
@@ -112,8 +121,19 @@ class ConeMapperNode(Node):
 
     # ------------------------------------------------------------------ #
     def publish_map(self) -> None:
-        if self.last_header is None:
+        if self.last_header is None or self.last_detection_mono is None:
             return
+
+        # Detector silence: drop the map so downstream planners fall back to
+        # their freshness checks instead of driving on a stale map.
+        silent_for = time.monotonic() - self.last_detection_mono
+        if silent_for > self.input_timeout and not self.input_lost:
+            self.input_lost = True
+            self.map_cones.clear()
+            self.get_logger().warn(
+                f"No detections for {silent_for:.1f}s (> {self.input_timeout:.1f}s); "
+                "clearing cone map"
+            )
 
         confirmed = publishable(self.map_cones, self.min_observations, self.max_cones)
 
