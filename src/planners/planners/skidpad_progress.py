@@ -29,7 +29,10 @@ class ProgressConfig:
     window_len: float = 18.0       # [m] published slice, > tracker max lookahead
     off_path_dist: float = 2.0     # [m]
     off_path_time: float = 1.0     # [s]
-    finish_margin: float = 0.5     # [m]
+    # The unchanged tracker stops when its minimum lookahead point (2.0 m)
+    # reaches the end at zero target speed, i.e. ~2 m before the geometric
+    # end. The finish threshold must be at least that lookahead.
+    finish_margin: float = 3.0     # [m]
     max_backtrack: float = 0.1     # [m] tolerance for nearest-point noise
 
 

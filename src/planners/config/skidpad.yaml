@@ -22,6 +22,9 @@ skidpad_planner_node:
     progress_search_ahead: 8.0  # [m]
     off_path_dist: 2.0          # [m]
     off_path_time: 1.0          # [s]
+    # >= tracker min lookahead (2.0 m): the car stops ~2 m before the
+    # geometric path end because the lookahead target speed reaches 0 there.
+    finish_margin: 3.0          # [m]
 
     # ---- fit gates (spec §6; do not relax) ----
     fit_min_cones_total: 40
@@ -49,7 +52,8 @@ skidpad_planner_node:
     entry_heading_deg: ""       # empty = use car heading from TF
 
     # first-test value, not a vehicle limit
-    speed_cap: 2.0              # [m/s]
+    # first-test value tuned for the tracker lateral error; NOT a vehicle limit
+    speed_cap: 1.2              # [m/s]
     max_lateral_acc: 5.0        # [m/s^2]
     max_accel: 2.5              # [m/s^2]
     max_brake: 4.0              # [m/s^2]

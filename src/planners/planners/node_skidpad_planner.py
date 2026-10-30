@@ -94,6 +94,7 @@ class SkidpadPlannerNode(Node):
         self.declare_parameter("progress_search_ahead", 8.0)
         self.declare_parameter("off_path_dist", 2.0)
         self.declare_parameter("off_path_time", 1.0)
+        self.declare_parameter("finish_margin", 3.0)
 
         # ---- fit gates (spec §6; do not relax) --------------------------
         self.declare_parameter("fit_min_cones_total", 40)
@@ -380,6 +381,7 @@ class SkidpadPlannerNode(Node):
                 window_len=self.window_len,
                 off_path_dist=float(self.get_parameter("off_path_dist").value),
                 off_path_time=float(self.get_parameter("off_path_time").value),
+                finish_margin=float(self.get_parameter("finish_margin").value),
             ),
         )
         pose = self._lookup_pose()
