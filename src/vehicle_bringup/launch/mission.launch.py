@@ -25,6 +25,11 @@ def generate_launch_description():
         executable="trackdrive_watcher_node",
     )
 
+    skidpad_watcher = Node(
+        package="vehicle_bringup",
+        executable="skidpad_watcher_node",
+    )
+
     inspection_launch = Node(
         package="vehicle_bringup",
         executable="inspection_handler_node",
@@ -40,6 +45,12 @@ def generate_launch_description():
     trackdrive_launch = Node(
         package="vehicle_bringup",
         executable="trackdrive_handler_node",
+        output="both",
+    )
+
+    skidpad_launch = Node(
+        package="vehicle_bringup",
+        executable="skidpad_handler_node",
         output="both",
     )
 
@@ -64,6 +75,13 @@ def generate_launch_description():
         )
     )
 
+    launch_skidpad_on_watcher_exit = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=skidpad_watcher,
+            on_exit=[skidpad_launch],
+        )
+    )
+
     stdout_linebuf_envvar = SetEnvironmentVariable("RCUTILS_LOGGING_BUFFERED_STREAM", "0")
 
     return LaunchDescription(
@@ -72,8 +90,10 @@ def generate_launch_description():
             inspection_watcher,
             ebs_watcher,
             trackdrive_watcher,
+            skidpad_watcher,
             launch_inspection_on_watcher_exit,
             launch_ebs_on_watcher_exit,
             launch_trackdrive_on_watcher_exit,
+            launch_skidpad_on_watcher_exit,
         ]
     )

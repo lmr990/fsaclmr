@@ -27,6 +27,10 @@ def generate_launch_description():
     max_track_width = LaunchConfiguration("max_track_width")
     corridor_max_dist = LaunchConfiguration("corridor_max_dist")
     rqt = LaunchConfiguration("rqt")
+    rviz = LaunchConfiguration("rviz")
+    skidpad_cone_map_topic = LaunchConfiguration("skidpad_cone_map_topic")
+    skidpad_entry_heading_deg = LaunchConfiguration("skidpad_entry_heading_deg")
+    path_tracker_ff_gain = LaunchConfiguration("path_tracker_ff_gain")
 
     # ---- EUFS simulation (camera enabled, lidar/laserscan disabled) ----
     simulation = IncludeLaunchDescription(
@@ -39,7 +43,7 @@ def generate_launch_description():
             "use_sim_time": use_sim_time,
             "track": track,
             "gazebo_gui": gazebo_gui,
-            "rviz": "true",
+            "rviz": rviz,
             "enable_camera": "true",
             "enable_lidar": "false",
             "enable_laserscan": "false",
@@ -65,6 +69,9 @@ def generate_launch_description():
             "shadow_planner": shadow_planner,
             "max_track_width": max_track_width,
             "corridor_max_dist": corridor_max_dist,
+            "skidpad_cone_map_topic": skidpad_cone_map_topic,
+            "skidpad_entry_heading_deg": skidpad_entry_heading_deg,
+            "path_tracker_ff_gain": path_tracker_ff_gain,
         }.items(),
     )
 
@@ -89,7 +96,25 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "planner",
                 default_value="urinay",
-                description="Path planner: urinay (color-blind Delaunay) or ft (FaSTTUBe)",
+                description="Path planner: urinay (color-blind Delaunay), ft "
+                "(FaSTTUBe), or skidpad (figure-eight template)",
+            ),
+            DeclareLaunchArgument(
+                "skidpad_cone_map_topic",
+                default_value="/mapping/cone_map",
+                description="Cone map for the skidpad fit; use "
+                "/ground_truth/global_map for the isolated-perception test",
+            ),
+            DeclareLaunchArgument(
+                "skidpad_entry_heading_deg",
+                default_value="",
+                description="Override the skidpad entry heading [deg]; empty = TF",
+            ),
+            DeclareLaunchArgument(
+                "path_tracker_ff_gain",
+                default_value="1.0",
+                description="Path tracker curvature feedforward gain; skidpad "
+                "uses 0.0 to avoid double counting the circle curvature",
             ),
             DeclareLaunchArgument(
                 "shadow_planner",
@@ -111,6 +136,11 @@ def generate_launch_description():
                 "rqt",
                 default_value="false",
                 description="Launch the rqt control perspective (manual steering GUI)",
+            ),
+            DeclareLaunchArgument(
+                "rviz",
+                default_value="true",
+                description="Launch RViz (set false for headless runs)",
             ),
             simulation,
             yolo_autonomous,

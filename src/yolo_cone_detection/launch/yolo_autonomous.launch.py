@@ -3,11 +3,12 @@
 Includes:
   - yolo_detector_node  : camera -> YOLO -> slam/cone_detection (track frame)
   - cone_mapper_node    : slam/cone_detection -> /mapping/cone_map (weighted merge)
-  - planner (choice, `planner:=urinay|ft`, default urinay):
+  - planner (choice, `planner:=urinay|ft|skidpad`, default urinay):
       urinay chain: cone_id_mapper_node + urinay_exec + urinay_path_bridge_node
                     (color-blind centerline from Delaunay triangulation)
       ft:           ft_planner_node (FaSTTUBe fsd_path_planning)
-    both publish /planning/path_with_speeds
+      skidpad:      skidpad_planner_node (figure-eight template fit)
+    only one chain publishes /planning/path_with_speeds
   - path_tracker_node   : path_with_speeds -> /control/driving_command
                           (adaptive-lookahead PP + curvature FF + steering PID)
   - safety_watchdog_node: wall-clock staleness failsafe -> stop command
@@ -35,12 +36,18 @@ def generate_launch_description():
     shadow_planner = LaunchConfiguration("shadow_planner")
     use_urinay = PythonExpression(["'", planner, "' == 'urinay'"])
     use_ft = PythonExpression(["'", planner, "' == 'ft'"])
+    use_skidpad = PythonExpression(["'", planner, "' == 'skidpad'"])
     # Shadow planner: the second chain runs with its output remapped to
     # /shadow/<name>/... and an arbiter node logs how it would have driven.
     # It never publishes to the control topics. Requires planner != shadow.
-    shadow_ft = PythonExpression(["'", shadow_planner, "' == 'ft' and '", planner, "' != 'ft'"])
+    # Skidpad has no shadow comparison (the template is a different mode).
+    shadow_ft = PythonExpression(
+        ["'", shadow_planner, "' == 'ft' and '", planner, "' != 'ft' and '",
+         planner, "' != 'skidpad'"]
+    )
     shadow_urinay = PythonExpression(
-        ["'", shadow_planner, "' == 'urinay' and '", planner, "' != 'urinay'"]
+        ["'", shadow_planner, "' == 'urinay' and '", planner, "' != 'urinay' and '",
+         planner, "' != 'skidpad'"]
     )
 
     # Track-dependent tuning: every track has its own width, so the urinay
@@ -139,6 +146,25 @@ def generate_launch_description():
             {
                 "use_sim_time": use_sim_time,
                 "corridor.max_dist_to_cone": corridor_max_dist,
+            },
+        ],
+    )
+
+    # ---- Skidpad planner (figure-eight template, chosen explicitly) ------
+    # Only this node publishes /planning/path_with_speeds when planner is
+    # skidpad: urinay and ft are conditionally disabled above.
+    skidpad_node = Node(
+        package="planners",
+        executable="skidpad_planner_node",
+        name="skidpad_planner_node",
+        output="screen",
+        condition=IfCondition(use_skidpad),
+        parameters=[
+            os.path.join(get_package_share_path("planners"), "config", "skidpad.yaml"),
+            {
+                "use_sim_time": use_sim_time,
+                "cone_map_topic": LaunchConfiguration("skidpad_cone_map_topic"),
+                "entry_heading_deg": LaunchConfiguration("skidpad_entry_heading_deg"),
             },
         ],
     )
@@ -245,7 +271,12 @@ def generate_launch_description():
         output="screen",
         parameters=[
             os.path.join(get_package_share_path("controllers"), "config", "control.yaml"),
-            {"use_sim_time": use_sim_time},
+            {
+                "use_sim_time": use_sim_time,
+                "curvature_ff_gain": ParameterValue(
+                    LaunchConfiguration("path_tracker_ff_gain"), value_type=float
+                ),
+            },
         ],
     )
 
@@ -276,7 +307,25 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "planner",
                 default_value="urinay",
-                description="Path planner: urinay (color-blind Delaunay) or ft (FaSTTUBe)",
+                description="Path planner: urinay (color-blind Delaunay), ft "
+                "(FaSTTUBe), or skidpad (figure-eight template)",
+            ),
+            DeclareLaunchArgument(
+                "skidpad_cone_map_topic",
+                default_value="/mapping/cone_map",
+                description="Cone map for the skidpad fit (use "
+                "/ground_truth/global_map for the isolated-perception test)",
+            ),
+            DeclareLaunchArgument(
+                "skidpad_entry_heading_deg",
+                default_value="",
+                description="Override the skidpad entry heading [deg]; empty = TF",
+            ),
+            DeclareLaunchArgument(
+                "path_tracker_ff_gain",
+                default_value="1.0",
+                description="Path tracker curvature feedforward gain; skidpad "
+                "uses 0.0 to avoid double counting the circle curvature",
             ),
             DeclareLaunchArgument(
                 "shadow_planner",
@@ -302,6 +351,7 @@ def generate_launch_description():
             cone_id_mapper_node,
             urinay_node,
             urinay_path_bridge_node,
+            skidpad_node,
             ft_shadow_node,
             cone_id_mapper_shadow_node,
             urinay_shadow_node,
