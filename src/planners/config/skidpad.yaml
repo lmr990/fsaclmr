@@ -1,0 +1,59 @@
+# FSAC skidpad (figure-eight) planner.
+# Template fit -> analytic path -> windowed PathWithSpeeds.
+skidpad_planner_node:
+  ros__parameters:
+    # ---- I/O ----
+    cone_map_topic: /mapping/cone_map
+    path_topic: /planning/path_with_speeds
+    full_path_topic: planning/skidpad_full_path
+    state_topic: planning/skidpad_state
+    marker_topic: planning/skidpad_markers
+    shutdown_topic: /system/shutdown
+    reset_topic: /system/reset
+    map_frame: track
+    base_frame: base_link
+
+    # ---- geometry / publishing ----
+    ds: 0.25                    # [m] path sampling spacing
+    publish_rate: 10.0          # [Hz] keeps the tracker's 0.5 s timeout satisfied
+    fit_rate: 5.0               # [Hz] template fit attempts while waiting
+    window_len: 18.0            # [m] > tracker max lookahead (8 m) + margin
+    progress_search_back: 1.0   # [m]
+    progress_search_ahead: 8.0  # [m]
+    off_path_dist: 2.0          # [m]
+    off_path_time: 1.0          # [s]
+
+    # ---- fit gates (spec §6; do not relax) ----
+    fit_min_cones_total: 40
+    fit_min_cones_per_circle: 16
+    fit_rms_max: 0.35           # [m]
+    fit_p90_max: 0.5            # [m]
+    fit_centre_dist_range: [16.0, 20.5]  # [m]
+    fit_radius_range: [7.5, 11.0]        # [m]
+    fit_ring_width_range: [2.4, 3.6]     # [m]
+    fit_freeze_updates: 5
+    fit_freeze_drift: 0.15      # [m]
+    fit_outlier_dist: 0.6       # [m] robust refit threshold
+    fit_max_outlier_frac: 0.20
+    fit_max_radius_diff: 0.5    # [m] between the two fitted circles
+    fit_max_centre_radius_mismatch: 0.5  # [m] |centre_dist/2 - R|
+    fit_max_alignment_deg: 15.0
+    fit_entry_along_range: [3.0, 30.0]   # [m] warning only
+    fit_entry_lateral_max: 2.5           # [m] warning only
+
+    # ---- path / speed profile ----
+    entry_len: 0.0              # 0 = start distance + 2 m, clamped below
+    entry_len_min: 10.0         # [m]
+    entry_len_max: 25.0         # [m]
+    exit_len: 20.0              # [m]
+    entry_heading_deg: ""       # empty = use car heading from TF
+
+    # first-test value, not a vehicle limit
+    speed_cap: 2.0              # [m/s]
+    max_lateral_acc: 5.0        # [m/s^2]
+    max_accel: 2.5              # [m/s^2]
+    max_brake: 4.0              # [m/s^2]
+    min_speed: 2.0              # [m/s]
+    curvature_lookahead_m: 5.0  # [m]
+    curvature_smoothing_window: 3
+    stop_len: 4.0               # [m] final smooth stop tail
