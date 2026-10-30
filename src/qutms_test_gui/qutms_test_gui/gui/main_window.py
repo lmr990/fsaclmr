@@ -155,6 +155,11 @@ class MainWindow(QMainWindow):
         if mode == self.dashboard.MODE_YOLO_AUTONOMOUS:
             yolo_path = self.dashboard.tcone_yolo_path
             planner = self.dashboard.planner
+            # The figure-eight track is only drivable with the dedicated
+            # template planner; select it automatically.
+            if track == "skidpad" and planner != "skidpad":
+                logger.info("Skidpad track selected; forcing planner=skidpad")
+                planner = "skidpad"
             logger.info(
                 "Starting YOLO autonomous loop (track=%s, planner=%s, tcone_yolo_path=%s)",
                 track, planner, yolo_path,
@@ -170,6 +175,10 @@ class MainWindow(QMainWindow):
             # passing "tcone_yolo_path:=" would override that with an empty path.
             if yolo_path:
                 args.append(f"tcone_yolo_path:={yolo_path}")
+            if planner == "skidpad":
+                # Pure pursuit already contains the path curvature; the
+                # extra feedforward double counts it on the skidpad circles.
+                args.append("path_tracker_ff_gain:=0.0")
             self.process_manager.start("ros2", args)
         else:
             logger.info("Starting eufs simulator (minimal control loop, track=%s)", track)

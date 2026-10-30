@@ -46,12 +46,22 @@ class VehicleSupervisor(Node):
         self.create_subscription(UInt8, "system/laps_completed", self.laps_callback, 1)
         self.create_subscription(DiagnosticArray, "diagnostics", self.diagnostics_callback, 1)
 
+        # Skidpad uses the TRACKDRIVE mission slot on the steering wheel, but
+        # launches the skidpad handler instead. Set this parameter on a car
+        # configured for the figure-eight event.
+        self.declare_parameter("skidpad_mission", False)
+        trackdrive_service = (
+            "launch/skidpad"
+            if bool(self.get_parameter("skidpad_mission").value)
+            else "launch/trackdrive"
+        )
+
         self.srv_list = [
             None,
             None,
             self.create_client(SetBool, "launch/inspection"),
             self.create_client(SetBool, "launch/ebs"),
-            self.create_client(SetBool, "launch/trackdrive"),
+            self.create_client(SetBool, trackdrive_service),
         ]
 
         self.system_launch_cli = self.create_client(SetBool, "launch/system")

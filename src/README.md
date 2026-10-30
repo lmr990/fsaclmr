@@ -48,7 +48,7 @@
 
 | 包名 | 构建类型 | 说明 |
 |------|---------|------|
-| planners | ament_python | 路径规划器 |
+| planners | ament_python | 路径规划器（ft / urinay / 八字 skidpad 模板） |
 | slam_gridmap | ament_python | SLAM 栅格地图转换 |
 | nav_bringup | ament_cmake | Nav2 启动配置 |
 
@@ -250,13 +250,20 @@ controllers/safety_watchdog_node            → 路径/TF 超时急停
 规划器可切换：`planner:=urinay`（默认，颜色无关）或 `planner:=ft`（FaSTTUBe，
 基于蓝/黄锥桶边界）。两者都经过 [planners/config](planners/config) 中的参数配置。
 
+八字绕环使用独立模式 `planner:=skidpad`：从 `/mapping/cone_map` 拟合双圆模板，
+解析生成 `ENTRY→右圆×2→左圆×2→EXIT`，再以 18 m 窗口发布单调进度路径，避免
+跟踪器在交叉点全局最近点歧义。参数在
+[planners/config/skidpad.yaml](planners/config/skidpad.yaml)，原理、启动命令与
+两轮仿真验收见 [planners/README.md](planners/README.md) 和
+[planners/docs/skidpad_acceptance.md](planners/docs/skidpad_acceptance.md)。
+
 ## 7. GUI 功能说明
 
 GUI 包含 6 个页面：
 
 | 页面 | 功能 |
 |------|------|
-| Dashboard | 仿真控制（启动/停止/重启，YOLO 模式可选规划器与 YOLO 路径）、任务控制、车辆状态、ROS2 状态 |
+| Dashboard | 仿真控制（启动/停止/重启，YOLO 模式可选 urinay/ft/skidpad 规划器与 YOLO 路径）、任务控制、车辆状态、ROS2 状态 |
 | Nodes | 实时 ROS2 节点列表 |
 | Topics | 实时 Topic 列表（名称、类型、发布/订阅数、频率） |
 | Vehicle | 车辆状态 + 控制指令（含 STALE 检测） |

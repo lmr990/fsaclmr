@@ -96,6 +96,7 @@ class DashboardPage(QWidget):
         self.cmb_planner = QComboBox()
         self.cmb_planner.addItem("Urinay (color-blind)", "urinay")
         self.cmb_planner.addItem("FaSTTUBe (ft)", "ft")
+        self.cmb_planner.addItem("Skidpad (figure-eight)", "skidpad")
         planner_layout.addWidget(self.cmb_planner)
         sys_layout.addLayout(planner_layout)
 
