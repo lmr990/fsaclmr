@@ -102,6 +102,8 @@ All parameters are in [`config/skidpad.yaml`](config/skidpad.yaml).
 ### Acceptance
 
 - Unit tests: `cd src/planners && python3 -m pytest test/ -q`
+- Design report (architecture, algorithms, improvements):
+  [`docs/skidpad_design.md`](docs/skidpad_design.md)
 - Two-round EUFS acceptance and the RViz screenshot:
   [`docs/skidpad_acceptance.md`](docs/skidpad_acceptance.md),
   [`docs/skidpad_rviz.png`](docs/skidpad_rviz.png)
