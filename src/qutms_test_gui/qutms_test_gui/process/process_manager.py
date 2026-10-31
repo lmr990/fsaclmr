@@ -342,6 +342,14 @@ class ProcessManager(QObject):
         self.stop()
         self._kill_stale_simulation()
 
+    def sweep_stale(self):
+        """Terminate processes matching this manager's sweep targets.
+
+        Public wrapper around the start-time sweep, for stopping leftovers
+        of a finished helper (e.g. the orphaned skidpad planner left by a
+        completed warm-up) when the simulation is stopped."""
+        self._kill_stale_simulation()
+
     def restart(self):
         self.stop()
         # QProcess emits finished after termination; restart there via a flag.

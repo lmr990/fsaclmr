@@ -54,18 +54,21 @@ the production planner waits forever and the car never moves. Two ways out:
 
 1. **GT cone map** (perception isolated, round 1):
    `skidpad_cone_map_topic:=/ground_truth/global_map`.
-2. **YOLO warm-up, one command** (round 2): while the sim runs
-   (`track:=skidpad`, planner either forced by the launch guard or selected
-   in the GUI), run
+2. **YOLO warm-up, one command** (round 2): while the sim runs, run
 
    ```bash
-   python3 src/planners/scripts/skidpad_yolo_warmup.py
+   ros2 run planners skidpad_yolo_warmup
    ```
 
    It drives one GT lap to build the YOLO map, resets the car, and hands
    over to the production planner on `/mapping/cone_map`. Repeated warm-ups
    in the same session fragment the YOLO map (the script warns above 120
    boundary cones); restart the simulation for a fresh `cone_mapper`.
+3. **One click in the test GUI**: select YOLO Autonomous mode and the
+   skidpad track, then press Start Simulator — the launch guard forces
+   `planner:=skidpad` and the GUI starts `skidpad_yolo_warmup`
+   automatically once the pipeline is RUNNING. Stop Simulator sweeps the
+   helper and its planner children.
 
 The launch-level guard in `yolo_autonomous_loop.launch.py` forces
 `planner:=skidpad` (and `path_tracker_ff_gain:=0.0` when left at the default)

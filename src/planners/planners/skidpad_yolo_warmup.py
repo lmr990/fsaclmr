@@ -24,8 +24,8 @@ The production planner consumes /mapping/cone_map only; the GT map is used
 exclusively by the temporary warm-up planner (launch-arg style remap, same
 as acceptance round 1/2).
 
-Usage (second terminal, while the sim runs):
-  python3 src/planners/scripts/skidpad_yolo_warmup.py
+Usage (while the sim runs — also started automatically by the test GUI):
+  ros2 run planners skidpad_yolo_warmup
 """
 
 from __future__ import annotations
@@ -191,10 +191,9 @@ def main() -> int:
 
     rclpy.init()
     node = WarmupClient(args.production_state_topic)
-    # DDS discovery can take a few seconds on a freshly launched sim. Only
-    # the SIM must be alive here (TF); the production planner is optional
-    # because phase 0 stops it anyway.
-    deadline = time.monotonic() + 12.0
+    # DDS discovery takes a few seconds and a GUI-triggered warm-up starts
+    # while Gazebo is still spawning the world, so wait generously.
+    deadline = time.monotonic() + 60.0
     pose = None
     while time.monotonic() < deadline:
         node.spin_states(0.5)
@@ -202,7 +201,7 @@ def main() -> int:
         if pose is not None:
             break
     if pose is None:
-        print("ERROR: no track->base_link TF; start the sim first "
+        print("ERROR: no track->base_link TF after 60 s; start the sim first "
               "(yolo_autonomous_loop, track:=skidpad)")
         return 2
     node.spin_states(2.0)

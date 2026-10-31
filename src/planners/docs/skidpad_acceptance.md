@@ -92,8 +92,8 @@ used the mapping warm-up, now automated:
 ros2 launch qutms_eufs_bridge yolo_autonomous_loop.launch.py \
   track:=skidpad gazebo_gui:=false rviz:=false use_sim_time:=true
 
-# terminal 2: one-command warm-up + handover
-python3 src/planners/scripts/skidpad_yolo_warmup.py
+# terminal 2: one-command warm-up + handover (also automatic from the GUI)
+ros2 run planners skidpad_yolo_warmup
 ```
 
 The script (`scripts/skidpad_yolo_warmup.py`) stops any running skidpad

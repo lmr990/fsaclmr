@@ -43,6 +43,13 @@ class MainWindow(QMainWindow):
         self.topic_monitor = TopicMonitor(self.ros_manager)
         self.vehicle_state = VehicleState(self.ros_manager)
         self.process_manager = ProcessManager()
+        # Skidpad warm-up helper. Its sweep targets cover the planner and
+        # the helper itself, so starting/stopping it never touches Gazebo
+        # (the sim manager keeps its own gzserver sweep).
+        self.warmup_manager = ProcessManager(
+            sweep_targets={"skidpad_planner_node", "skidpad_yolo_warmup"}
+        )
+        self._last_sim_skidpad = False
 
         # --- Pages --------------------------------------------------------
         self.dashboard = DashboardPage()
@@ -110,6 +117,15 @@ class MainWindow(QMainWindow):
             lambda line: logger.warn("EUFS-ERR: %s", line)
         )
 
+        # Skidpad warm-up helper -> status bar + logs.
+        self.warmup_manager.state_changed.connect(self._on_warmup_state)
+        self.warmup_manager.stdout_line.connect(
+            lambda line: logger.info("Warmup: %s", line.rstrip())
+        )
+        self.warmup_manager.stderr_line.connect(
+            lambda line: logger.info("Warmup: %s", line.rstrip())
+        )
+
     # --- ROS lifecycle ---------------------------------------------------
     def _start_ros(self):
         logger.info("Starting ROS2 manager")
@@ -160,6 +176,10 @@ class MainWindow(QMainWindow):
             if track == "skidpad" and planner != "skidpad":
                 logger.info("Skidpad track selected; forcing planner=skidpad")
                 planner = "skidpad"
+            # One-click skidpad: once the launch is RUNNING, the warm-up
+            # helper builds the YOLO cone map (one GT lap) and hands over to
+            # the production planner (see _on_process_state).
+            self._last_sim_skidpad = planner == "skidpad"
             logger.info(
                 "Starting YOLO autonomous loop (track=%s, planner=%s, tcone_yolo_path=%s)",
                 track, planner, yolo_path,
@@ -182,6 +202,7 @@ class MainWindow(QMainWindow):
             self.process_manager.start("ros2", args)
         else:
             logger.info("Starting eufs simulator (minimal control loop, track=%s)", track)
+            self._last_sim_skidpad = False
             self.process_manager.start(
                 "ros2",
                 ["launch", "qutms_eufs_bridge", "minimal_control_loop.launch.py", f"track:={track}"],
@@ -189,15 +210,38 @@ class MainWindow(QMainWindow):
 
     def _on_stop_sim(self):
         logger.info("Stopping eufs simulator")
+        self.warmup_manager.stop()
         self.process_manager.stop()
+        # A completed warm-up leaves the production skidpad planner running
+        # (it outlives the helper by design); sweep it with the sim.
+        self.warmup_manager.sweep_stale()
 
     def _on_restart_sim(self):
         logger.info("Restarting eufs simulator")
+        self.warmup_manager.stop()
         self.process_manager.restart()
 
     def _on_process_state(self, state: str):
         self.statusBar().showMessage(f"Simulator: {state}")
         logger.info("Simulator state: %s", state)
+        # One-click skidpad: launch the warm-up helper as soon as the
+        # pipeline is up. The helper waits (up to 60 s) for the world and
+        # TF, so starting it immediately is safe.
+        if state == "RUNNING" and self._last_sim_skidpad:
+            if self.warmup_manager.is_running:
+                logger.info("Warm-up already running; not restarting")
+                return
+            logger.info(
+                "One-click skidpad: starting YOLO warm-up "
+                "(GT mapping lap -> car reset -> production planner)"
+            )
+            self.warmup_manager.start(
+                "ros2", ["run", "planners", "skidpad_yolo_warmup"]
+            )
+
+    def _on_warmup_state(self, state: str):
+        self.statusBar().showMessage(f"Skidpad warm-up: {state}")
+        logger.info("Warm-up state: %s", state)
 
     # --- Mission / emergency control (real ROS2 interfaces) -------------
     def _on_start_mission(self, mission_id: int):
@@ -296,7 +340,9 @@ class MainWindow(QMainWindow):
     # --- Cleanup ---------------------------------------------------------
     def closeEvent(self, event):
         logger.info("Shutting down GUI")
-        # Closing the window must not leave ros2 launch / gazebo / rviz running.
+        # Closing the window must not leave ros2 launch / gazebo / rviz /
+        # the warm-up helper or its planner children running.
+        self.warmup_manager.shutdown()
         self.process_manager.shutdown()
         self.topic_monitor.stop()
         self.vehicle_state.stop()
