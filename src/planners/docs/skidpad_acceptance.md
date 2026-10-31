@@ -80,28 +80,29 @@ ros2 launch qutms_eufs_bridge yolo_autonomous_loop.launch.py \
 
 ### Round 2 (live YOLO map) — warm-up required
 
-At the EUFS start line the 15 m simulated camera sees only 15–19 blue/yellow
-boundary cones; the 40/16 fit gate cannot pass from a cold start and the car
-does not move. No gate was relaxed and no YOLO/camera parameter was changed.
-The acceptance used a mapping warm-up:
-
-1. Run the Round 1 command (GT path drives the car) until
-   `planning/skidpad_state` reaches `LEFT_1`. The running YOLO detector /
-   `cone_mapper` accumulates the live map: **59 boundary cones (30 blue, 29
-   yellow)** plus start-line orange/ghosts.
-2. Stop only the GT `skidpad_planner_node`; call
-   `/system/reset_car_pos` (car back to the start; TF confirmed `(0.0,0.0)`,
-   yaw ≈0°).
-3. Start the production node on the live map:
+At the EUFS start line the 10 m / 110 deg simulated camera sees only 13-26
+blue/yellow boundary cones — most of both circles stays beside/behind the
+forward FOV even while driving the entry straight — so the 40/16 fit gate
+cannot pass from a cold start and the car never moves (the gate was NOT
+relaxed; this is a sensor-coverage fact, not a fitting bug). The acceptance
+used the mapping warm-up, now automated:
 
 ```bash
-ros2 run planners skidpad_planner_node --ros-args \
-  --params-file src/planners/config/skidpad.yaml -p use_sim_time:=true
+# terminal 1: sim (the launch guard forces planner:=skidpad on this track)
+ros2 launch qutms_eufs_bridge yolo_autonomous_loop.launch.py \
+  track:=skidpad gazebo_gui:=false rviz:=false use_sim_time:=true
+
+# terminal 2: one-command warm-up + handover
+python3 src/planners/scripts/skidpad_yolo_warmup.py
 ```
 
-The final planner consumed `/mapping/cone_map` only; the production node was
-never pointed at a GT topic. The YOLO map at freeze held 51 boundary cones
-(49 inliers after robust refit).
+The script (`scripts/skidpad_yolo_warmup.py`) stops any running skidpad
+planner, drives one GT lap so the live YOLO detector / cone_mapper build
+`/mapping/cone_map` (59-67 boundary cones), stops, verifies the car back at
+the start pose via TF, and spawns the production planner on the live YOLO
+map. The production planner consumed `/mapping/cone_map` only. Repeated
+warm-ups in one session fragment the YOLO map (the script warns above 120
+boundary cones); restart the simulation for a fresh `cone_mapper`.
 
 ## Regression
 

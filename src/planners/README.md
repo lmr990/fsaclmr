@@ -47,9 +47,30 @@ ros2 launch qutms_eufs_bridge yolo_autonomous_loop.launch.py \
 ```
 
 Same without `skidpad_cone_map_topic` uses the live YOLO `/mapping/cone_map`.
-From the EUFS start line the 15 m simulated camera only sees 15–19 blue/yellow
-boundary cones, below the 40/16 fit gate, so the YOLO round needs a mapping
-warm-up (see [`docs/skidpad_acceptance.md`](docs/skidpad_acceptance.md)).
+From the EUFS start line the 10 m / 110 deg simulated camera sees only
+13-26 blue/yellow boundary cones (most of both circles stays beside/behind
+the forward FOV even while driving the entry), below the 40/16 fit gate, so
+the production planner waits forever and the car never moves. Two ways out:
+
+1. **GT cone map** (perception isolated, round 1):
+   `skidpad_cone_map_topic:=/ground_truth/global_map`.
+2. **YOLO warm-up, one command** (round 2): while the sim runs
+   (`track:=skidpad`, planner either forced by the launch guard or selected
+   in the GUI), run
+
+   ```bash
+   python3 src/planners/scripts/skidpad_yolo_warmup.py
+   ```
+
+   It drives one GT lap to build the YOLO map, resets the car, and hands
+   over to the production planner on `/mapping/cone_map`. Repeated warm-ups
+   in the same session fragment the YOLO map (the script warns above 120
+   boundary cones); restart the simulation for a fresh `cone_mapper`.
+
+The launch-level guard in `yolo_autonomous_loop.launch.py` forces
+`planner:=skidpad` (and `path_tracker_ff_gain:=0.0` when left at the default)
+whenever `track:=skidpad`, so a forgotten planner argument can no longer
+produce the "drives straight through the crossing" failure mode.
 
 Real car:
 
