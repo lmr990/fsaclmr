@@ -365,8 +365,16 @@ class YoloDetectorNode(Node):
 
         img_h, img_w = depth.shape[:2]
 
-        # Look up transform camera_frame -> output_frame once per frame.
-        transform = self._lookup_transform(camera_frame, tf_stamp)
+        # The coordinates are converted to the camera BODY frame
+        # (X forward, Y left, Z up) below, so the TF must be looked up from
+        # the body frame, NOT the "_optical" frame: "_optical" frames differ
+        # between the real ZED wrapper (true -90/0/-90 rotation) and the
+        # simulator URDF (identity, despite the name). Feeding body-frame
+        # coordinates into the optical TF applied the optical->body rotation
+        # twice and mapped real cones ~110 deg behind the car (verified
+        # 2026-11-01, ZED 2i).
+        body_frame = camera_frame.replace("_optical", "")
+        transform = self._lookup_transform(body_frame, tf_stamp)
         if transform is None:
             return cones, cones_cov
 
@@ -402,9 +410,10 @@ class YoloDetectorNode(Node):
             y_opt = (cy_px - cy0) * z / fy
             z_opt = z
 
-            # The depth image header frame is the camera body frame
-            # (X forward, Y left, Z up). Convert optical coordinates to body
-            # coordinates before applying the body->output transform.
+            # The depth image header frame is the camera optical frame; the
+            # coordinates are re-expressed in the camera body frame
+            # (X forward, Y left, Z up) and transformed from there — the TF
+            # above is looked up from the body frame to match.
             x_cam = z_opt           # forward
             y_cam = -x_opt          # left
             z_cam = -y_opt          # up
