@@ -20,7 +20,7 @@ class Vel2Ackermann(Node):
         super().__init__("vel_to_ackermann_node")
 
         self.declare_parameter("Kp", 1.0)
-        self.declare_parameter("wheelbase", 1.5)
+        self.declare_parameter("wheelbase", 1.580)  # [m] single source: eufs_racecar/urdf/wheels.urdf.xacro
         self.declare_parameter("distance_ctrl", True)
         self.declare_parameter("distance_Kp", -20.0)
         self.declare_parameter("distance_max", 1.5)

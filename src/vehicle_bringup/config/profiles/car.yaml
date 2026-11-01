@@ -1,0 +1,23 @@
+# governance phase 3 — environment profile: car (整车上)
+# 适用场景: 实车运行 (定位接管 track->base_link, publish_track_tf:=false)
+# 最近实测: 无 —— 全部 mount 量待整车装车后实测回填, 不得以仿真/台架值充数。
+#
+# 本文件是环境参数的单一来源; 由 system_smoke --profile-file 显式指定使用。
+
+camera_name: zed2i
+camera_link: null  # TODO(整车实测): 相机 mount link 名
+camera_model: zed2i
+
+# 相机 mount (相对 base_link); null = 待整车实测
+mount:
+  x: null            # [m] TODO(整车实测)
+  y: null            # [m] TODO(整车实测)
+  z: null            # [m] TODO(整车实测; 注意 = 离地高 - base_link 离地高)
+  roll: 0.0          # [rad] 装夹要求水平
+  pitch: null        # [rad] TODO(整车实测; 建议 -10 ~ -15 deg 下俯, 1 度误差 -> 10 m 处 ~1.7 m)
+  yaw: null          # [rad] TODO(整车实测)
+
+wheelbase: 1.580    # [m] 单一事实源: eufs_racecar/urdf/wheels.urdf.xacro (整车实测后若有偏差以 URDF 修正为准并同步)
+
+rig:
+  camera_height_m: null   # TODO(整车实测)

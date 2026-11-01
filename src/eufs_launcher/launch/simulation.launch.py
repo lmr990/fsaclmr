@@ -22,6 +22,44 @@ def get_argument(context, arg):
     return LaunchConfiguration(arg).perform(context)
 
 
+def resolve_plugin_params(params_file: str) -> str:
+    """Resolve relative config filenames in pluginParams.yaml (governance phase 3).
+
+    pluginParams.yaml carries relative filenames for noise_config /
+    vehicle_config so the repo copy stays workspace-independent. The Gazebo
+    race car plugin consumes those values verbatim as filesystem paths, so a
+    resolved copy (paths joined against the eufs_config share dir) is written
+    to a temp file and passed to Gazebo instead. Absolute values (e.g. ones
+    rewritten by the eufs_launcher GUI) pass through unchanged.
+    """
+    import tempfile
+
+    import yaml
+
+    with open(params_file, "r") as f:
+        data = yaml.safe_load(f)
+    share = get_package_share_directory("eufs_config")
+    changed = False
+    for node_params in data.values():
+        p = node_params.get("ros__parameters", {})
+        for key in ("noise_config", "vehicle_config"):
+            val = str(p.get(key, ""))
+            if val and not os.path.isabs(val):
+                cand = val if val.startswith("config/") else join("config", val)
+                cand = join(share, cand)
+                if isfile(cand):
+                    p[key] = cand
+                    changed = True
+    if not changed:
+        return params_file
+    tmp = tempfile.NamedTemporaryFile(
+        mode="w", suffix="_pluginParams_resolved.yaml", delete=False
+    )
+    yaml.safe_dump(data, tmp)
+    tmp.close()
+    return tmp.name
+
+
 def gen_world(context, *args, **kwargs):
     use_robostack = get_argument(context, "robostack")
     track = str(get_argument(context, "track") + ".world")
@@ -68,8 +106,8 @@ def gen_world(context, *args, **kwargs):
     gazebo_launch = join(
         get_package_share_directory("gazebo_ros"), "launch", "gazebo.launch.py"
     )
-    params_file = join(
-        get_package_share_directory("eufs_config"), "config", "pluginParams.yaml"
+    params_file = resolve_plugin_params(
+        join(get_package_share_directory("eufs_config"), "config", "pluginParams.yaml")
     )
 
     actions = [

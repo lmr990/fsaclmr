@@ -2,7 +2,7 @@
 vel_to_ackermann_node:
   ros__parameters:
     Kp: 4.0
-    wheelbase: 1.5
+    wheelbase: 1.580        # [m] single source: eufs_racecar/urdf/wheels.urdf.xacro (governance phase 3)
     distance_ctrl: True
     distance_Kp: -20.0
     distance_max: 1.5

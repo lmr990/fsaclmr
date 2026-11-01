@@ -78,7 +78,13 @@ class CheckResult:
 
 
 def load_profile(args) -> dict:
-    """Profile source: --profile-file, else this package's config/<profile>.yaml."""
+    """Profile source: --profile-file, else package config + vehicle_bringup profiles.
+
+    The system_smoke config/<profile>.yaml defines the CHECK STRUCTURE
+    (which topics/edges/params); environment VALUES (mount, wheelbase) are
+    overridden from vehicle_bringup/config/profiles/ (governance phase 3):
+    --profile sim reads sim.yaml, --profile real reads bench.yaml.
+    """
     import yaml
 
     if args.profile_file:
@@ -86,7 +92,32 @@ def load_profile(args) -> dict:
     cfg = Path(get_package_share_directory("system_smoke")) / "config" / f"{args.profile}.yaml"
     if not cfg.exists():
         raise SystemExit(f"profile config not found: {cfg}")
-    return yaml.safe_load(cfg.read_text())
+    base = yaml.safe_load(cfg.read_text())
+
+    env_file = {"sim": "sim.yaml", "real": "bench.yaml"}.get(args.profile)
+    if env_file:
+        try:
+            env_dir = Path(get_package_share_directory("vehicle_bringup")) / "config" / "profiles"
+            env = yaml.safe_load((env_dir / env_file).read_text()) or {}
+        except Exception:
+            env = {}
+        mount = env.get("mount") or {}
+        cam_link = env.get("camera_link")
+        for edge in base.get("tf", {}).get("edges", []):
+            applies = edge.get("check_values") and (
+                not cam_link or edge.get("child") == str(cam_link))
+            if applies:
+                edge.setdefault("expect", {})
+                for axis in ("x", "y", "z", "roll", "pitch", "yaw"):
+                    if mount.get(axis) is not None:
+                        edge["expect"][axis] = float(mount[axis])
+        wb = env.get("wheelbase")
+        if wb is not None:
+            for item in base.get("params", []):
+                if item["name"] == "wheelbase":
+                    item["expect"] = float(wb)
+        base["_env_profile"] = env_file
+    return base
 
 
 def sh(cmd: list, timeout: float = 10.0) -> str:

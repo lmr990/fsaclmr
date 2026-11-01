@@ -1,0 +1,24 @@
+# governance phase 3 — environment profile: sim
+# 适用场景: EUFS 仿真链 (qutms_eufs_bridge/launch/yolo_autonomous_loop.launch.py)
+# 数值来源: eufs_racecar/urdf 与 eufs_config/config (仿真 URDF/配置, 非实测)
+# 最近更新: 2026-11-02 (governance phase 3)
+#
+# 本文件是环境参数的单一来源 (mount/wheelbase 等), 由 system_smoke 冒烟读取;
+# launch 接线改造为后续项 (见治理报告), 当前仅作为冒烟期望值。
+
+camera_name: zed2i
+camera_link: zed2i
+camera_model: zed2i
+
+# sim URDF mount: eufs_racecar/urdf/robot.urdf.xacro:103 (相对 chassis);
+# base_link->zed2i 组合值 = chassis_z(wheel_diameter/2) + 0.900, 冒烟对 sim
+# 链只查边存在性, 不做数值断言 (见 system_smoke config/sim.yaml note)
+mount:
+  x: -0.370          # [m] 相对 chassis
+  y: 0.0
+  z: 0.900           # [m] 相对 chassis
+  roll: 0.0          # [rad]
+  pitch: 0.0
+  yaw: 0.0
+
+wheelbase: 1.580    # [m] 单一事实源: eufs_racecar/urdf/wheels.urdf.xacro

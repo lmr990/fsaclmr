@@ -3,8 +3,11 @@
     map_frame: "track"
     odom_frame: "odom"
     base_frame: "base_link"
-    # params rewritten by launcher upon user selection:
-    noise_config: "/home/lmr/cqut/install/eufs_config/share/eufs_config/config/motionNoise.yaml"
+    # Relative filenames are resolved against the eufs_config share directory
+    # at launch (eufs_launcher/launch/simulation.launch.py). DO NOT COMMIT
+    # absolute workspace paths here (governance phase 3; the eufs_launcher GUI
+    # rewrites absolute values on use -- restore relative form before committing).
+    noise_config: "motionNoise.yaml"
     publish_ground_truth: true
     simulate_transform: true
     simulate_perception: true
@@ -25,7 +28,7 @@ race_car:
     steering_lock_time: 1.5
     # params rewritten by launcher upon user selection:
     command_mode: "velocity"
-    vehicle_config: "/home/lmr/cqut/install/eufs_config/share/eufs_config/config/configDry.yaml"
+    vehicle_config: "configDry.yaml"
     vehicle_model: "DynamicBicycle"
 
 sbg_driver:

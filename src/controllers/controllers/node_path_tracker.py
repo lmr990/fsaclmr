@@ -67,7 +67,7 @@ class PathTracker(Node):
         self.declare_parameter("closed_path_gap_tol", 1.0)
 
         # vehicle model
-        self.declare_parameter("wheelbase", 1.5)
+        self.declare_parameter("wheelbase", 1.580)  # [m] single source: eufs_racecar/urdf/wheels.urdf.xacro
 
         # steering
         # The EUFS plugin maps a 90 deg command onto the physical steering lock

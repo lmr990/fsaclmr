@@ -1,0 +1,26 @@
+# governance phase 3 — environment profile: bench
+# 适用场景: 台架 (ZED 2i 1.4 m 立杆 / 0.90 m 相机架高, 静态 track->base_link TF)
+# 入口: yolo_cone_detection/launch/zed_real_pipeline.launch.py
+# 最近实测: 2026-11-02 用户确认架高 0.90 m、下俯 12 deg (-0.21 rad);
+#           x/y/yaw 尚未实测 —— 待用户确认, 不得以车值充数。
+#
+# 本文件是环境参数的单一来源, 由 system_smoke --profile real 读取。
+
+camera_name: zed2i
+camera_link: zed2i_camera_link
+camera_model: zed2i
+
+# 相机 mount (相对 base_link); null = 待用户实测确认
+mount:
+  x: null            # [m] TODO(用户实测): 当前 launch 默认 -0.370 为仿真 URDF 值 (F2)
+  y: null            # [m] TODO(用户实测)
+  z: 0.90            # [m] 2026-11-02 实测
+  roll: 0.0          # [rad] 水平装夹
+  pitch: -0.21       # [rad] -12 deg 下俯, 2026-11-02 与架高 0.9 m 配套设定
+  yaw: null          # [rad] TODO(用户实测)
+
+wheelbase: 1.580    # [m] 单一事实源: eufs_racecar/urdf/wheels.urdf.xacro (车台架同值)
+
+rig:
+  camera_height_m: 0.90   # 相机离地/台面高度 (2026-11-02 实测)
+  bench_note: "台架立杆总高 1.4 m, 相机架高 0.90 m"

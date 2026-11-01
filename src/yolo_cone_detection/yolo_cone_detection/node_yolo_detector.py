@@ -110,8 +110,8 @@ class YoloDetectorNode(Node):
         # distinguish small from large orange cones, so the size gate checks
         # orange-class boxes against the [small, large] band while blue and
         # yellow are checked against the small height on both sides.
-        self.declare_parameter("cone_real_height", 0.305)
-        self.declare_parameter("cone_large_height", 0.505)
+        self.declare_parameter("cone_real_height", 0.305)  # single source: config/yolo_detector.yaml
+        self.declare_parameter("cone_large_height", 0.505)  # single source: config/yolo_detector.yaml
         # When the depth sample is missing or outside [min_range, max_range]:
         # false (default) drops the box; true estimates the distance from the
         # box height instead. The estimate puts mis detections AND real cones
