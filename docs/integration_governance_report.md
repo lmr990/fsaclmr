@@ -125,3 +125,12 @@ car.yaml 中的相应注释已同步更正。
 - `src/vehicle_bringup/config/profiles/{sim,bench,car}.yaml`
 - `docs/frame_unification_plan.md`（草案）
 - 注错输出：docs/evidence/smoke_tf_badcamz.txt、/tmp/smoke_wb_bad.txt、/tmp/smoke_wb_good.txt、/tmp/smoke_live_ok.txt、/tmp/smoke_live_bad.txt、/tmp/smoke_profile_merged.txt（已归档至 docs/evidence/，可按 §3 命令复现）
+
+## 9. 治理后跟进（2026-11-02 晚，用户逐项请求）
+
+| 项 | commit / 状态 | 说明 |
+|---|---|---|
+| 叶帧名统一（sim → wrapper v5 拼写） | `80aeed4` | `zed2i_{left,right}_camera_optical_frame` → `..._camera_frame_optical`，改 sim URDF + pluginParams camera_frame_id + 两份 rviz + 冒烟 profile；xacro 展开静态验证旧拼写清零。**豁免**治理任务"不动 sim URDF optical 关节"边界（用户明确请求，上车一致性优先） |
+| 工作区路径收敛 | 物理操作（未入库） | `qutms_ws_1` 符号链接按用户要求删除；因本 AI 会话绑定该路径导致 shell 短暂断裂，已重建链接恢复。**最终约定**：真实路径唯一为 `/home/lmr/qutms_ws`，`qutms_ws_1` 仅作兼容别名存在 |
+| `qutms_ws_old/` 清理 | **待用户确认** | 752 MB，git 停在 d0f93e4（2026-10-26 旧线），build/install 占大头；确认无独有内容后可删除或 tar 留档（`qutms_ws.zip` 310 MB 同理） |
+| 全量重建 install | 建议项 | 修复"顶层 setup.bash 不拾取后建包（system_smoke）"：`cd /home/lmr/qutms_ws && rm -rf build install && colcon build`，之后 `source install/setup.bash` 即完整环境，显式前缀 env 不再需要 |
