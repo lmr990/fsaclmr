@@ -189,6 +189,24 @@ class ConeMapperNode(Node):
             m.color.a = min(1.0, 0.3 + 0.1 * c.obs_count)
             markers.markers.append(m)
 
+            # Coordinate label above each cone: lets an operator read the
+            # mapped (x, y) straight off RViz instead of echoing topics.
+            label = Marker()
+            label.header = self.last_header
+            label.ns = "cone_map_text"
+            label.id = i
+            label.type = Marker.TEXT_VIEW_FACING
+            label.action = Marker.ADD
+            label.pose.position.x = c.x
+            label.pose.position.y = c.y
+            label.pose.position.z = 0.45
+            label.pose.orientation.w = 1.0
+            label.scale.z = 0.22
+            label.color.r = label.color.g = label.color.b = 1.0
+            label.color.a = 0.95
+            label.text = f"({c.x:.2f}, {c.y:.2f})"
+            markers.markers.append(label)
+
         self.marker_pub.publish(markers)
 
 
