@@ -46,6 +46,11 @@ _CLASS_BGR = {0: (0, 100, 255), 1: (255, 120, 0), 2: (0, 220, 255)}
 _CLASS_LABEL = {0: "orange", 1: "blue", 2: "yellow"}
 
 
+def _range_std_for(z: float) -> float:
+    """Diagonal covariance per cone: depth noise grows with range."""
+    return max(0.05, 0.01 * z)
+
+
 def resolve_tcone_root(configured: str) -> Path:
     """Locate the TCone-YOLO repository without hard-coding one workspace copy.
 
@@ -109,6 +114,10 @@ class YoloDetectorNode(Node):
         # at invented positions (ZED depth holes are common), so it is
         # opt-in for experiments only.
         self.declare_parameter("depth_size_fallback", False)
+        # Per-frame dedupe: boxes whose back-projected positions are closer
+        # than this are the same physical cone (NMS leftovers); keep the
+        # higher-confidence one. 0 disables.
+        self.declare_parameter("frame_dedupe_radius", 0.4)
         self.declare_parameter("image_topic", "/zed2i/zed_node/rgb/image_rect_color")
         self.declare_parameter("depth_topic", "/zed2i/zed_node/depth/depth_registered")
         self.declare_parameter("camera_info_topic", "/zed2i/zed_node/rgb/camera_info")
@@ -132,6 +141,7 @@ class YoloDetectorNode(Node):
         self.cone_real_height = float(self.get_parameter("cone_real_height").value)
         self.allow_size_fallback = bool(self.get_parameter("depth_size_fallback").value)
         self.depth_dropped = 0
+        self.frame_dupes_dropped = 0
         self.image_topic = self.get_parameter("image_topic").value
         self.depth_topic = self.get_parameter("depth_topic").value
         self.camera_info_topic = self.get_parameter("camera_info_topic").value
@@ -318,7 +328,8 @@ class YoloDetectorNode(Node):
         self.fps.next_iter()
         self.get_logger().info(
             f"raw_detections={len(detections)} cones={len(cones)} "
-            f"no_depth_dropped={self.depth_dropped} | "
+            f"no_depth_dropped={self.depth_dropped} "
+            f"dupes_dropped={self.frame_dupes_dropped} | "
             f"infer: {infer_ms:.1f}ms | FPS: {self.fps.fps():.1f}",
             throttle_duration_sec=2.0,
         )
@@ -387,17 +398,28 @@ class YoloDetectorNode(Node):
         if transform is None:
             return cones, cones_cov
 
+        # Per-frame dedupe radius [m]: two boxes on the same physical cone
+        # (tight box + taller box surviving NMS) sample different depths
+        # (cone face vs background above the apex) and become permanent
+        # near-duplicate map entries. Keep the higher-confidence box of any
+        # pair closer than this, after back-projection.
+        dedupe_r = float(self.get_parameter("frame_dedupe_radius").value)
+        candidates = []
+
         for x1, y1, x2, y2, conf, cls in detections:
-            # Sample depth at the centre of the bounding box.
+            # Sample depth near the BASE of the bounding box: the cone base
+            # sits on the ground and is the nearest surface, while the box
+            # centre often covers the background above/beyond the apex.
             cx_px = int(round((x1 + x2) / 2.0))
-            cy_px = int(round((y1 + y2) / 2.0))
+            base_cy = y2 - 0.25 * max(1.0, float(y2 - y1))
+            cy_px = int(round(base_cy))
             cx_px = int(np.clip(cx_px, 0, img_w - 1))
             cy_px = int(np.clip(cy_px, 0, img_h - 1))
 
             # Apparent pixel height of the cone bounding box.
             bbox_h = max(1.0, float(y2 - y1))
 
-            # Sample depth over a small window around the centre (robust to holes).
+            # Sample depth over a small window around the base point.
             win = 5
             x0 = max(0, cx_px - win)
             x1b = min(img_w, cx_px + win + 1)
@@ -407,7 +429,12 @@ class YoloDetectorNode(Node):
             valid = patch[np.isfinite(patch) & (patch > 0.0)]
             z = None
             if valid.size:
-                cand = float(np.median(valid))
+                # Nearest-mode cluster: the cone face is the closest surface
+                # in the window; background bleeding through the cone edges
+                # is farther. A plain median flips between the two.
+                zmin = float(np.min(valid))
+                cluster = valid[valid <= zmin + 0.5]
+                cand = float(np.median(cluster))
                 if self.min_range <= cand <= self.max_range:
                     z = cand
             if z is None and self.allow_size_fallback:
@@ -442,7 +469,22 @@ class YoloDetectorNode(Node):
             )
 
             color = CLASS_TO_COLOR.get(int(cls), Cone.UNKNOWN)
+            candidates.append(
+                (x_out, y_out, z_out, float(conf), color, _range_std_for(z))
+            )
 
+        # Greedy per-frame dedupe: keep the higher-confidence box of any
+        # pair whose back-projected positions are within dedupe_r.
+        candidates.sort(key=lambda c: -c[3])
+        r_sq = dedupe_r * dedupe_r
+        kept = []
+        for cand in candidates:
+            x, y, _, _, _, rs = cand
+            if all((x - k[0]) ** 2 + (y - k[1]) ** 2 > r_sq for k in kept):
+                kept.append(cand)
+        self.frame_dupes_dropped += len(candidates) - len(kept)
+
+        for x_out, y_out, z_out, _conf, color, rs in kept:
             cone = Cone()
             cone.location = Point(x=float(x_out), y=float(y_out), z=float(z_out))
             cone.color = color
@@ -451,11 +493,7 @@ class YoloDetectorNode(Node):
             cone_cov = ConeWithCovariance()
             cone_cov.cone = cone
             # Simple diagonal covariance (depth noise + angular noise).
-            range_std = max(0.05, 0.01 * z)
-            cone_cov.covariance = [
-                range_std * range_std, 0.0,
-                0.0, range_std * range_std,
-            ]
+            cone_cov.covariance = [rs * rs, 0.0, 0.0, rs * rs]
             cones_cov.append(cone_cov)
 
         return cones, cones_cov
