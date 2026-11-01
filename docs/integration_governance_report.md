@@ -72,10 +72,13 @@ real profile TF 正常配置对照 `/tmp/smoke_profile_merged.txt`：`3 PASS -> 
 | F5 GUI 重写行为（eufs_launcher GUI 使用时仍会把绝对路径写回 pluginParams.yaml） | 未改 | GUI 逻辑改动超出"路径写法"最小面；已注释警告 + 报告登记，建议后续单 |
 | Phase 3 launch 参数结构改造（顶层 launch 读 profile 传参） | 未做（任务允许的退步） | 纪律 8：测试窗口期不动已跑通 launch 接线；profiles 已作为冒烟期望源落地 |
 
-## 5. 执行过程中的新发现（F5 实锤，均未擅动）
+## 5. 执行过程中的新发现（**2026-11-02 二次核实后更正**，见 §6c）
 
-1. **工作区双路径同体**：`/home/lmr/qutms_ws` 与 `/home/lmr/qutms_ws_1` 的 `build/`、`log/` 为**同一目录**（inode 相同），`install/setup.bash`、`local_setup.bash` 内硬编码 `/home/lmr/qutms_ws/...`。**建议**（登记不执行）：固定一份无空格、无后缀路径为唯一工作区，重建 install（`rm -rf build install && colcon build`）消除硬编码路径；shell 中严禁凭记忆 cd 工作区（本次执行中 shell 持久 cwd 曾漂回旧路径导致多次构建错位，已用显式 `cd` 规避）。
-2. **旧 install 的 zed_msgs 与现 RMW 不匹配**：混用旧 `/home/lmr/qutms_ws/install` 的 zed_wrapper 时容器崩溃（`libzed_msgs__rosidl_typesupport_fastrtps_cpp.so` 缺失）。建议单一工作区重建时一并重建 zed 包。
+1. ~~工作区双路径同体~~ **误诊更正**：`/home/lmr/qutms_ws_1` 是指向 `/home/lmr/qutms_ws` 的**符号链接**（2026-10-27 创建，`readlink -f` 已验证），全机**只有一份工作区**；`install/setup.bash` 硬编码的 `/home/lmr/qutms_ws/install` 即真实路径，source 后 AMENT_PREFIX_PATH 正常填充。真正的历史残留是 `/home/lmr/qutms_ws_old/`（旧副本）与 `qutms_ws.zip`（备份包）；`pluginParams.yaml` 曾指向的 `/home/lmr/cqut/` **已不存在**——这正是当初绝对路径失效的原因，phase 3 已用相对路径根治。执行期间 shell 在 `qutms_ws` 与 `qutms_ws_1` 两个写法间切换属同一目录，无实质影响，此前"构建错位"的判断一并撤回。
+2. ~~zed_msgs 与现 RMW 不匹配~~ **降级为待查**：`libzed_msgs__rosidl_typesupport_fastrtps_cpp.so` 实际存在（已验证），当时的加载失败原因未定位（疑依赖链/环境拼接问题）；real 链在无相机环境本就无法完整启动，留待 bench 窗口期复核。
+3. **real wrapper v5 叶帧名与 sim URDF 不同**：`zed2i_left_camera_frame_optical`（实车）vs `zed2i_left_camera_optical_frame`（sim）——已分别写入两份 profile 的 `leaf_frames`；属于 F10 的又一别名证据，已补进 TOPICS_AND_NODES.md 的 frame 节（phase 1 文档 + 本报告）。
+4. control.yaml 的 `wheelbase: 1.5` 属 `vel_to_ackermann_node`（非 tracker）；tracker 本就是 1.580。F4 的"并存"是两节点各一值，phase 3 已统一。
+5. **顶层 install/setup.bash 不拾取后建包**：system_smoke 构建后 source 顶层 setup.bash 仍查不到（`ros2 pkg list` 0 命中，其余包正常）；运行用显式前缀 env 可绕过。修复：`rm -rf build install && colcon build` 全量重建（建议与清理 qutms_ws_old 一起做，见 §7）。
 3. **real wrapper v5 叶帧名与 sim URDF 不同**：`zed2i_left_camera_frame_optical`（实车）vs `zed2i_left_camera_optical_frame`（sim）——已分别写入两份 profile 的 `leaf_frames`；属于 F10 的又一别名证据，已补进 TOPICS_AND_NODES.md 的 frame 节（phase 1 文档 + 本报告）。
 4. control.yaml 的 `wheelbase: 1.5` 属 `vel_to_ackermann_node`（非 tracker）；tracker 本就是 1.580。F4 的"并存"是两节点各一值，phase 3 已统一。
 
@@ -89,6 +92,13 @@ real profile TF 正常配置对照 `/tmp/smoke_profile_merged.txt`：`3 PASS -> 
 | qutms_test_gui/test | 2 failed / 1 passed | 2 failed / 1 passed（相同用例） | **预存失败**（断言硬编码 /home/lmr/qutms_ws 路径，F5 类；该包治理中零文件改动，见 §5-1） |
 
 **新增失败 = 0**。
+
+## 6c. 二次核实更正记录（2026-11-02 晚）
+
+§5-1/§5-2 的初版结论基于"存在两个工作区副本"的错误前提（把符号链接当成了副本、
+把 cwd 在同一目录的两个路径写法间切换当成了漂移），本轮用 `readlink -f` / inode /
+source 实测推翻并已在 §5 原文标注。F5 的最终结论：唯一工作区 `/home/lmr/qutms_ws`；
+风险项为 `qutms_ws_old/` 残留与已消失的 cqut 绝对路径引用（后者已根治）。
 
 ## 6b. 更正（2026-11-02 追加）
 
