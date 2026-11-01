@@ -50,7 +50,7 @@ cone_detection:
     lidar_detects_colour: false
     lidar_offset_x: 1.59
     camera_update_rate: 15.0
-    camera_frame_id: "zed2i_left_camera_optical_frame"
+    camera_frame_id: "zed2i_left_camera_frame_optical"  # aligned with ZED wrapper v5 naming (governance follow-up)
     camera_min_view_distance: 0.5
     camera_max_view_distance: 10.0
     camera_fov: 1.91986 # 110 degrees

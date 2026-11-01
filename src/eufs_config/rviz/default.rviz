@@ -84,11 +84,11 @@ Visualization Manager:
           Value: true
         zed2i_left_camera_frame:
           Value: true
-        zed2i_left_camera_optical_frame:
+        zed2i_left_camera_frame_optical:
           Value: true
         zed2i_right_camera_frame:
           Value: true
-        zed2i_right_camera_optical_frame:
+        zed2i_right_camera_frame_optical:
           Value: true
       Marker Scale: 1
       Name: TF
@@ -191,7 +191,7 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        zed2i_left_camera_optical_frame:
+        zed2i_left_camera_frame_optical:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -199,7 +199,7 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        zed2i_right_camera_optical_frame:
+        zed2i_right_camera_frame_optical:
           Alpha: 1
           Show Axes: false
           Show Trail: false

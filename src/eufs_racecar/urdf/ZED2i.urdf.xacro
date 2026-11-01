@@ -36,9 +36,9 @@
 
     <link name="${prefix}_right_camera_frame"/>
 
-    <link name="${prefix}_left_camera_optical_frame"/>
+    <link name="${prefix}_left_camera_frame_optical"/>
 
-    <link name="${prefix}_right_camera_optical_frame"/>
+    <link name="${prefix}_right_camera_frame_optical"/>
 
     <joint name="${prefix}_left_camera_joint" type="fixed">
       <parent link="${prefix}_camera_center"/>
@@ -55,13 +55,13 @@
     <joint name="left_camera_optical_joint" type="fixed">
       <origin xyz="0 0 0" rpy="0.0 0.0 0.0" />
       <parent link="${prefix}_left_camera_frame" />
-      <child link="${prefix}_left_camera_optical_frame"/>
+      <child link="${prefix}_left_camera_frame_optical"/>
     </joint>
 
     <joint name="right_camera_optical_joint" type="fixed">
       <origin xyz="0 0 0" rpy="0.0 0.0 0.0" />
       <parent link="${prefix}_right_camera_frame" />
-      <child link="${prefix}_right_camera_optical_frame"/>
+      <child link="${prefix}_right_camera_frame_optical"/>
     </joint>
 
     <!-- depth frame -->
@@ -75,7 +75,7 @@
 
     <!-- Enable simulated ZED2i Camera  -->
     <xacro:if value="${active}">
-      <gazebo reference="${prefix}_left_camera_optical_frame">
+      <gazebo reference="${prefix}_left_camera_frame_optical">
         <!-- Depth and Mono cam simulation -->
         <sensor name="stereo_depth" type="depth">
           <always_on>true</always_on>

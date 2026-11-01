@@ -9,7 +9,7 @@ tf:
        note: "EUFS gazebo_race_car_plugin publishes track->odom->base_link (pluginParams map/odom/base_frame)"}
     - {parent: base_link, child: zed2i, static: true, check_values: false,
        note: "sim URDF mount via chassis; value source eufs_racecar/urdf/robot.urdf.xacro:103 (-0.370, 0, 0.900); composed over chassis z=wheel_diameter/2, so numeric check skipped in sim"}
-  leaf_frames: [zed2i_left_camera_optical_frame, zed2i_right_camera_optical_frame]
+  leaf_frames: [zed2i_left_camera_frame_optical, zed2i_right_camera_frame_optical]
 
 liveness:
   - {topic: /zed2i/zed_node/rgb/image_rect_color, msg_type: sensor_msgs/msg/Image, frames: [zed2i]}
