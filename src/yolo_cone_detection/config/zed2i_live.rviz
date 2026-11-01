@@ -1,0 +1,98 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.3
+      Cell Size: 1
+      Class: rviz_default_plugins/Grid
+      Color: 100; 100; 110
+      Enabled: true
+      Plane Cell Count: 30
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Class: rviz_default_plugins/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: RGB8
+      Enabled: true
+      Position Transformer: XYZ
+      Queue Size: 2
+      Selectable: true
+      Size (m): 0.015
+      Style: Flat Squares
+      Topic:
+        Depth: 2
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /zed2i/zed_node/point_cloud/cloud_registered
+      Use Fixed Frame: true
+      Value: true
+    - Class: rviz_default_plugins/Camera
+      Enabled: true
+      Image Rendering: background and overlay
+      Topic:
+        Depth: 1
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /zed2i/zed_node/rgb/color/rect/image
+      Value: true
+      Visibility:
+        Grid: false
+        Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Cone map
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /mapping/cone_map_viz
+      Value: true
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Frame Timeout: 15
+      Marker Scale: 0.8
+      Show Arrows: false
+      Show Axes: true
+      Show Names: false
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 20; 20; 24
+    Fixed Frame: track
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 6
+      Focal Point:
+        X: 1.5
+        Y: 0
+        Z: 0.3
+      Name: Current View
+      Pitch: -0.2
+      Target Frame: <Fixed Frame>
+      Yaw: 3.6
+      Value: Orbit (rviz)
+    Saved: ~
+Window Geometry:
+  Height: 900
+  Width: 1400
