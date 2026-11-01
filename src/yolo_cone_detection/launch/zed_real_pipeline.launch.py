@@ -140,7 +140,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument("camera_name", default_value="zed2i",
                               description="namespace; zed2i keeps config parity with sim"),
-        DeclareLaunchArgument("camera_model", default_value="zedm",
+        DeclareLaunchArgument("camera_model", default_value="zed2i",
                               description="ZED model (zedm for ZED-M, zed2i, ...)"),
         DeclareLaunchArgument("image_topic", default_value="/zed2i/zed_node/rgb/color/rect/image",
                               description="wrapper v5 RGB topic"),
