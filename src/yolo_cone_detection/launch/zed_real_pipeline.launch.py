@@ -131,8 +131,12 @@ def generate_launch_description():
                 "input_topic": "slam/cone_detection",
                 "output_topic": "/mapping/cone_map",
                 "merge_radius": 0.5,
-                "min_observations": 3,
-                "max_age_sec": 600.0,
+                # Static-world gating: new positions stay tentative (never
+                # published, evicted in 5 s) until 4 tight observations span
+                # >= 1 s; established cones reject observations beyond
+                # 2.5*sigma instead of being dragged by them.
+                "min_observations": 5,
+                "max_age_sec": 120.0,
             }
         ],
     )

@@ -31,11 +31,33 @@ yolo_detector_node:
     min_range: 0.5
     # Match the simulated ZED2i depth sensor effective range (~15m).
     max_range: 15.0
+    # Cone heights for the size gate, FSAC/FSG rule values (small 0.305 m,
+    # large orange 0.505 m). The image cannot separate small from large
+    # orange cones, so orange-class boxes are gated against the whole
+    # [small, large] band; blue/yellow against the small height both sides.
+    cone_large_height: 0.505
     # Depth sample missing / outside [min_range, max_range]: drop the box
     # (default). true = estimate the distance from the box height instead —
     # that invents positions for mis detections AND real cones (ZED depth
     # holes at cone edges / against sunlight are common); experiments only.
     depth_size_fallback: false
+
+    # Geometric consistency gate: a real cone's apparent pixel height must
+    # match the sampled depth, h_px ≈ fy * H / z. The ratio (actual/expected
+    # box height) is distance independent:
+    #   - far too SHORT -> only part of the cone is visible (hand, person
+    #     walking past): the depth window landed on the occluder, which is
+    #     closer than the cone — the classic ghost-cone source;
+    #   - far too TALL  -> not a cone at that distance (e.g. a marshal in an
+    #     orange vest detected as an orange cone).
+    # Boxes clipped by the top/bottom frame edge lose apparent height, so
+    # the too-short half is skipped for them (too-tall still applies).
+    # Tolerance band is a PRIOR, not calibrated (待标定): max_ratio 2.0 keeps
+    # 0.505 m large orange cones while rejecting standing people; the
+    # calibration plan is in docs/occlusion_ghost_acceptance.md.
+    size_gate: true
+    size_gate_min_ratio: 0.55
+    size_gate_max_ratio: 2.0
 
     # ---- Topics ----
     image_topic: "/zed2i/zed_node/rgb/image_rect_color"

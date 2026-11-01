@@ -31,6 +31,7 @@ from driverless_msgs.msg import Cone, ConeDetectionStamped, ConeWithCovariance
 from driverless_common.common import QOS_LATEST, FPSHandler
 
 from yolo_cone_detection.yolo_inference import YoloInference
+from yolo_cone_detection.size_gate import size_gate_reject
 
 
 # TCone-YOLO class index -> driverless_msgs Cone colour constant.
@@ -105,9 +106,12 @@ class YoloDetectorNode(Node):
         # Match the ZED2i depth camera effective operating range used in the
         # simulation and URDF; beyond this, depth becomes invalid/NaN.
         self.declare_parameter("max_range", 15.0)
-        # Real-world cone height (m) used to estimate distance from the
-        # apparent bounding-box height when the depth sensor returns no value.
+        # Real-world cone heights (m), FSAC/FSG rule values. The image cannot
+        # distinguish small from large orange cones, so the size gate checks
+        # orange-class boxes against the [small, large] band while blue and
+        # yellow are checked against the small height on both sides.
         self.declare_parameter("cone_real_height", 0.305)
+        self.declare_parameter("cone_large_height", 0.505)
         # When the depth sample is missing or outside [min_range, max_range]:
         # false (default) drops the box; true estimates the distance from the
         # box height instead. The estimate puts mis detections AND real cones
@@ -118,6 +122,15 @@ class YoloDetectorNode(Node):
         # than this are the same physical cone (NMS leftovers); keep the
         # higher-confidence one. 0 disables.
         self.declare_parameter("frame_dedupe_radius", 0.4)
+        # Geometric consistency gate (see _build_cones): drop boxes whose
+        # apparent height contradicts the sampled depth. max_ratio 2.0 keeps
+        # the 0.505 m large orange cones (ratio 1.66) while rejecting
+        # standing people (ratio ~5); min_ratio 0.55 rejects partially
+        # occluded cones whose depth window landed on the occluder (hand,
+        # person walking past) — the classic source of ghost cones.
+        self.declare_parameter("size_gate", True)
+        self.declare_parameter("size_gate_min_ratio", 0.55)
+        self.declare_parameter("size_gate_max_ratio", 2.0)
         self.declare_parameter("image_topic", "/zed2i/zed_node/rgb/image_rect_color")
         self.declare_parameter("depth_topic", "/zed2i/zed_node/depth/depth_registered")
         self.declare_parameter("camera_info_topic", "/zed2i/zed_node/rgb/camera_info")
@@ -140,7 +153,20 @@ class YoloDetectorNode(Node):
         self.max_range = float(self.get_parameter("max_range").value)
         self.cone_real_height = float(self.get_parameter("cone_real_height").value)
         self.allow_size_fallback = bool(self.get_parameter("depth_size_fallback").value)
+        self.size_gate = bool(self.get_parameter("size_gate").value)
+        self.size_gate_min_ratio = float(self.get_parameter("size_gate_min_ratio").value)
+        self.size_gate_max_ratio = float(self.get_parameter("size_gate_max_ratio").value)
+        h_small = float(self.get_parameter("cone_real_height").value)
+        h_large = float(self.get_parameter("cone_large_height").value)
+        # TCone-YOLO class index -> (smallest, largest) plausible cone height.
+        # 0 red/orange (small or large), 1 blue, 2 yellow.
+        self._class_heights = {
+            0: (h_small, h_large),
+            1: (h_small, h_small),
+            2: (h_small, h_small),
+        }
         self.depth_dropped = 0
+        self.size_gate_dropped = 0
         self.frame_dupes_dropped = 0
         self.image_topic = self.get_parameter("image_topic").value
         self.depth_topic = self.get_parameter("depth_topic").value
@@ -329,6 +355,7 @@ class YoloDetectorNode(Node):
         self.get_logger().info(
             f"raw_detections={len(detections)} cones={len(cones)} "
             f"no_depth_dropped={self.depth_dropped} "
+            f"size_gate_dropped={self.size_gate_dropped} "
             f"dupes_dropped={self.frame_dupes_dropped} | "
             f"infer: {infer_ms:.1f}ms | FPS: {self.fps.fps():.1f}",
             throttle_duration_sec=2.0,
@@ -449,6 +476,24 @@ class YoloDetectorNode(Node):
             if z is None:
                 self.depth_dropped += 1
                 continue
+
+            # Depth-size consistency gate (see size_gate.py): occluder-
+            # agnostic rejection of boxes whose apparent height contradicts
+            # the sampled depth. Sits after depth sampling / range gating
+            # and before back-projection; message structure and covariance
+            # are unchanged.
+            if self.size_gate:
+                h_small, h_large = self._class_heights.get(
+                    int(cls), (self.cone_real_height, self.cone_real_height)
+                )
+                touches_edge = y1 <= 1 or y2 >= img_h - 2
+                if size_gate_reject(
+                    bbox_h, z, fy, h_small, h_large,
+                    self.size_gate_min_ratio, self.size_gate_max_ratio,
+                    touches_edge,
+                ):
+                    self.size_gate_dropped += 1
+                    continue
 
             # Back-project to camera optical frame (X right, Y down, Z forward).
             x_opt = (cx_px - cx0) * z / fx
