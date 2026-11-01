@@ -12,7 +12,9 @@ yolo_detector_node:
 
     # ---- Inference ----
     imgsz: 416
-    conf_thres: 0.15
+    # Real-scene value (shadows, floor texture and background objects pass
+    # at 0.15); the 0.15 sim value lives in the sim-only overrides if needed.
+    conf_thres: 0.25
     iou_thres: 0.45
     max_det: 1000
     # Force CUDA; the GPU is shared with Gazebo's camera rendering so we
@@ -29,6 +31,11 @@ yolo_detector_node:
     min_range: 0.5
     # Match the simulated ZED2i depth sensor effective range (~15m).
     max_range: 15.0
+    # Depth sample missing / outside [min_range, max_range]: drop the box
+    # (default). true = estimate the distance from the box height instead —
+    # that invents positions for mis detections AND real cones (ZED depth
+    # holes at cone edges / against sunlight are common); experiments only.
+    depth_size_fallback: false
 
     # ---- Topics ----
     image_topic: "/zed2i/zed_node/rgb/image_rect_color"

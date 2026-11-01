@@ -103,6 +103,12 @@ class YoloDetectorNode(Node):
         # Real-world cone height (m) used to estimate distance from the
         # apparent bounding-box height when the depth sensor returns no value.
         self.declare_parameter("cone_real_height", 0.305)
+        # When the depth sample is missing or outside [min_range, max_range]:
+        # false (default) drops the box; true estimates the distance from the
+        # box height instead. The estimate puts mis detections AND real cones
+        # at invented positions (ZED depth holes are common), so it is
+        # opt-in for experiments only.
+        self.declare_parameter("depth_size_fallback", False)
         self.declare_parameter("image_topic", "/zed2i/zed_node/rgb/image_rect_color")
         self.declare_parameter("depth_topic", "/zed2i/zed_node/depth/depth_registered")
         self.declare_parameter("camera_info_topic", "/zed2i/zed_node/rgb/camera_info")
@@ -124,6 +130,8 @@ class YoloDetectorNode(Node):
         self.min_range = float(self.get_parameter("min_range").value)
         self.max_range = float(self.get_parameter("max_range").value)
         self.cone_real_height = float(self.get_parameter("cone_real_height").value)
+        self.allow_size_fallback = bool(self.get_parameter("depth_size_fallback").value)
+        self.depth_dropped = 0
         self.image_topic = self.get_parameter("image_topic").value
         self.depth_topic = self.get_parameter("depth_topic").value
         self.camera_info_topic = self.get_parameter("camera_info_topic").value
@@ -309,7 +317,8 @@ class YoloDetectorNode(Node):
 
         self.fps.next_iter()
         self.get_logger().info(
-            f"raw_detections={len(detections)} cones={len(cones)} | "
+            f"raw_detections={len(detections)} cones={len(cones)} "
+            f"no_depth_dropped={self.depth_dropped} | "
             f"infer: {infer_ms:.1f}ms | FPS: {self.fps.fps():.1f}",
             throttle_duration_sec=2.0,
         )
@@ -396,14 +405,23 @@ class YoloDetectorNode(Node):
             y1b = min(img_h, cy_px + win + 1)
             patch = depth[y0:y1b, x0:x1b]
             valid = patch[np.isfinite(patch) & (patch > 0.0)]
-            if valid.size == 0:
+            z = None
+            if valid.size:
+                cand = float(np.median(valid))
+                if self.min_range <= cand <= self.max_range:
+                    z = cand
+            if z is None and self.allow_size_fallback:
+                # Opt-in only: a fabricated monocular distance puts
+                # mis detections AND real cones at invented positions
+                # (ZED depth holes at cone edges / against sunlight are
+                # common), which silently corrupts the map. Dropping the
+                # box is the honest default; the planner copes with a
+                # missing cone far better than with a ghost.
                 z = (fy * self.cone_real_height) / bbox_h
                 z = float(np.clip(z, self.min_range, self.max_range))
-            else:
-                z = float(np.median(valid))
-                if z < self.min_range or z > self.max_range:
-                    z = (fy * self.cone_real_height) / bbox_h
-                    z = float(np.clip(z, self.min_range, self.max_range))
+            if z is None:
+                self.depth_dropped += 1
+                continue
 
             # Back-project to camera optical frame (X right, Y down, Z forward).
             x_opt = (cx_px - cx0) * z / fx
