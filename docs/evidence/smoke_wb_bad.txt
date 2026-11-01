@@ -1,0 +1,5 @@
+[smoke] profile=sim window=10.0s only=['params'] domain=0
+PASS [params  ] expected nodes present (1)
+FAIL [params  ] /path_tracker_node wheelbase = 1.5 (expect 1.58)  <- MISMATCH (F4 class)
+SUMMARY: 1 PASS / 1 FAIL / 0 SKIP -> SMOKE FAILED
+[ros2run]: Process exited with failure 1

@@ -1,0 +1,4 @@
+[smoke] profile=sim window=8.0s only=['liveness'] domain=0
+FAIL [liveness] /mapping/cone_map: 0 messages in 8s
+SUMMARY: 0 PASS / 1 FAIL / 0 SKIP -> SMOKE FAILED
+[ros2run]: Process exited with failure 1

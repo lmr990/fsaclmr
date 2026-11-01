@@ -1,0 +1,4 @@
+[smoke] profile=sim window=10.0s only=['params'] domain=0
+PASS [params  ] expected nodes present (1)
+PASS [params  ] /path_tracker_node wheelbase = 1.58 (expect 1.58)
+SUMMARY: 2 PASS / 0 FAIL / 0 SKIP -> SMOKE PASSED
