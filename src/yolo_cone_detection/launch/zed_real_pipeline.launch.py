@@ -165,12 +165,14 @@ def generate_launch_description():
                               description="Camera mount x in base_link [m]"),
         DeclareLaunchArgument("cam_y", default_value="0.0",
                               description="Camera mount y in base_link [m]"),
-        DeclareLaunchArgument("cam_z", default_value="0.697",
-                              description="Camera mount z in base_link [m]"),
+        DeclareLaunchArgument("cam_z", default_value="0.9",
+                              description="Camera mount z in base_link [m] "
+                              "(0.9 m mount height, measured)"),
         DeclareLaunchArgument("cam_roll", default_value="0.0",
                               description="Camera mount roll [rad]"),
-        DeclareLaunchArgument("cam_pitch", default_value="0.0",
-                              description="Camera mount pitch [rad], negative = tilted down"),
+        DeclareLaunchArgument("cam_pitch", default_value="-0.21",
+                              description="Camera mount pitch [rad], negative = tilted down "
+                              "(-0.21 = -12 deg, tuned for the 0.9 m mount height)"),
         DeclareLaunchArgument("cam_yaw", default_value="0.0",
                               description="Camera mount yaw [rad]"),
         DeclareLaunchArgument("perception", default_value="true",
