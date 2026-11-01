@@ -8,6 +8,10 @@ zed_real_pipeline.launch.py.
 The simulation acceptance uses qutms_eufs_bridge/yolo_autonomous_loop.launch.py
 with planner:=skidpad instead; this launch is for the vehicle.
 """
+# F3 依赖: 本 launch 内含 zed_real_pipeline, 依赖 ZED wrapper 的
+# publish_urdf:=true (默认) 提供相机内部帧 TF; 任何配置不得关闭它,
+# 否则检测器因查不到 track<-optical TF 逐帧跳过。(governance phase 4)
+
 
 import os
 

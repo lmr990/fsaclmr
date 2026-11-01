@@ -7,6 +7,7 @@ odom_filter_node:
     disabled_at_startup: false
 
     debug: False # https://docs.ros.org/en/noetic/api/robot_localization/html/state_estimation_nodes.html#debug
+    # LEGACY 遗产 3/3: 旧车绝对路径, 换机失效 (governance phase 4 注释, 值未动)
     debug_out_file: /home/ubuntu/QUTMS/tmp/robot_localization_debug.txt # https://docs.ros.org/en/noetic/api/robot_localization/html/state_estimation_nodes.html#debug-out-file
 
     frequency: 50.0 # https://docs.ros.org/en/noetic/api/robot_localization/html/state_estimation_nodes.html#frequency
@@ -21,6 +22,7 @@ odom_filter_node:
     # frames # https://docs.ros.org/en/noetic/api/robot_localization/html/state_estimation_nodes.html#frame
     map_frame: track # Defaults to "map" if unspecified
     odom_frame: odom # Defaults to "odom" if unspecified
+    # LEGACY 遗产 1/3: 根帧 base_footprint 与现链 base_link 不一致 (F1, 见包 README)
     base_link_frame: base_footprint # Defaults to "base_link" if unspecified
     world_frame: odom # Defaults to the value ofodom_frame if unspecified
 
@@ -85,6 +87,7 @@ navsat_transform_node:
   ros__parameters:
     use_sim_time: false
 
+    # LEGACY 遗产 2/3: 布里斯班磁偏角, 换场地必须重算 (见包 README)
     magnetic_declination_radians: 0.1937  # For lat/long Brisbane
     # yaw_offset: 3.14159265  # IMU reads 0 facing magnetic north, not east
     # yaw_offset: 0.0

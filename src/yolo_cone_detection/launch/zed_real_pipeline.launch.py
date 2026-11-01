@@ -8,6 +8,10 @@ to what the detection stack consumes:
     /zed2i/zed_node/rgb/color/rect/image      /zed2i/zed_node/rgb/image_rect_color
     /zed2i/zed_node/depth/depth_registered    (unchanged)
 
+F3 lifeline: the wrapper's publish_urdf (default true) publishes the camera
+internal frames; it must never be turned off or every detection is skipped
+for lack of a track<-optical TF. (governance phase 4)
+
 TF: the wrapper's visual-odometry TF is disabled. ``zed2i_camera_link`` may
 only have ONE parent, so ``odom -> zed2i_camera_link`` (wrapper) and
 ``base_link -> zed2i_camera_link`` (mount) cannot coexist -- tf2 silently

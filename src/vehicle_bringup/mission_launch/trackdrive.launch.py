@@ -1,3 +1,11 @@
+"""LEGACY launch — 引用旧 nav_bringup 定位链 (governance phase 4 标注).
+
+与本目录 skidpad.launch.py 的新链 (zed_real_pipeline, 无 nav 链) 不同:
+本文件走 slam_toolbox + EKF + base_footprint 旧栈, 含布里斯班磁偏角与
+/home/ubuntu 调试路径三项遗产, 见 nav_bringup/README.md。当前架构下
+trackdrive 应迁移到新链后弃用本文件。
+"""
+
 import datetime
 import os
 
