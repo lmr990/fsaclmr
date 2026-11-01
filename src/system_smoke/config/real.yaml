@@ -10,8 +10,8 @@ tf:
        expect: {x: 0.0, y: 0.0, z: 0.0, roll: 0.0, pitch: 0.0, yaw: 0.0},
        note: "bench identity TF (publish_track_tf:=true); on-car localization replaces it"}
     - {parent: base_link, child: zed2i_camera_link, static: true, check_values: true,
-       expect: {x: -0.370, y: 0.0, z: 0.9, roll: 0.0, pitch: -0.21, yaw: 0.0},
-       note: "camera mount; cam_x pending user confirmation (F2)"}
+       expect: {x: 0.0, y: 0.0, z: 0.9, roll: 0.0, pitch: -0.21, yaw: 0.0},
+       note: "camera mount; bench convention base_link = camera ground projection (values overridden from bench.yaml)"}
   leaf_frames: [zed2i_left_camera_frame_optical]
 
 liveness:

@@ -165,8 +165,10 @@ def generate_launch_description():
         DeclareLaunchArgument("publish_camera_tf", default_value="true",
                               description="Publish the static camera mount (false when "
                               "the vehicle URDF already owns base_link->camera_link)"),
-        DeclareLaunchArgument("cam_x", default_value="-0.370",
-                              description="Camera mount x in base_link [m]"),
+        DeclareLaunchArgument("cam_x", default_value="0.0",
+                              description="Camera mount x in base_link [m] "
+                              "(bench convention: base_link = camera ground projection; "
+                              "sim URDF value was -0.370)"),
         DeclareLaunchArgument("cam_y", default_value="0.0",
                               description="Camera mount y in base_link [m]"),
         DeclareLaunchArgument("cam_z", default_value="0.9",

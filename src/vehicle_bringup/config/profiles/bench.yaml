@@ -1,8 +1,10 @@
 # governance phase 3 — environment profile: bench
 # 适用场景: 台架 (ZED 2i 1.4 m 立杆 / 0.90 m 相机架高, 静态 track->base_link TF)
 # 入口: yolo_cone_detection/launch/zed_real_pipeline.launch.py
-# 最近实测: 2026-11-02 用户确认架高 0.90 m、下俯 12 deg (-0.21 rad);
-#           x/y/yaw 尚未实测 —— 待用户确认, 不得以车值充数。
+# 原点约定 (用户 2026-11-02 采纳): base_link = 相机正下方地面投影点,
+#           因此 cam_x=cam_y=cam_yaw=0 (定义零, 非实测); z=0.90 m 与
+#           pitch=-0.21 rad (-12 deg) 为 2026-11-02 实测/设定值。
+#           相机物理朝向目测对准参考线摆正 (1-2 度目测误差在 5 m 处 ~10-17 cm)。
 #
 # 本文件是环境参数的单一来源, 由 system_smoke --profile real 读取。
 
@@ -12,12 +14,12 @@ camera_model: zed2i
 
 # 相机 mount (相对 base_link); null = 待用户实测确认
 mount:
-  x: null            # [m] TODO(用户实测): 当前 launch 默认 -0.370 为仿真 URDF 值 (F2)
-  y: null            # [m] TODO(用户实测)
+  x: 0.0             # [m] 原点约定: base_link 在相机正下方 (定义零)
+  y: 0.0             # [m] 同上
   z: 0.90            # [m] 2026-11-02 实测
   roll: 0.0          # [rad] 水平装夹
   pitch: -0.21       # [rad] -12 deg 下俯, 2026-11-02 与架高 0.9 m 配套设定
-  yaw: null          # [rad] TODO(用户实测)
+  yaw: 0.0           # [rad] 原点约定: 相机对准 +x 方向 (物理目测摆正)
 
 wheelbase: 1.580    # [m] 单一事实源: eufs_racecar/urdf/wheels.urdf.xacro (车台架同值)
 

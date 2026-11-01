@@ -101,7 +101,7 @@ car.yaml 中的相应注释已同步更正。
 
 ## 7. 待用户确认项
 
-1. **bench mount x/y/yaw 实测值**（`bench.yaml` 中为 null；launch 默认 cam_x=-0.370 仍是仿真 URDF 值——F2 的残留半项）。
+1. ~~bench mount x/y/yaw~~ **已解决（2026-11-02 用户采纳约定）**：base_link = 相机正下方地面投影点，x/y/yaw 定义为零（物理朝向目测摆正）；launch 默认 cam_x 由仿真值 -0.370 改 0.0，F2 残留清零。
 2. car.yaml 全部 mount 量（整车装车后实测回填）。
 3. `qutms_controller.launch.py` 的 wheelbase 1.525（对齐 configDry 车辆模型）是否纳入单源。
 4. Phase 2/3 两个"未验证"补做的时间窗（sim 全链冒烟 + 换机 clone 验证）。

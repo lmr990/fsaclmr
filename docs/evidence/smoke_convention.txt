@@ -1,0 +1,5 @@
+[smoke] profile=real window=10.0s only=['tf'] domain=0
+PASS [tf      ] mount track->base_link values within tolerance (±0.01 m / ±0.5 deg)
+PASS [tf      ] mount base_link->zed2i_camera_link values within tolerance (±0.01 m / ±0.5 deg)
+PASS [tf      ] camera leaf frame 'zed2i_left_camera_frame_optical' resolvable
+SUMMARY: 3 PASS / 0 FAIL / 0 SKIP -> SMOKE PASSED
