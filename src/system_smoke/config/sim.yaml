@@ -1,0 +1,38 @@
+# governance phase 2 — sim profile (yolo_autonomous_loop chain)
+# Values sourced from code at commit 074c38f+7ebc7dd; environment values move
+# to vehicle_bringup/config/profiles/ in governance phase 3.
+tf:
+  wait_sec: 3.0
+  root: track
+  edges:
+    - {parent: track, child: base_link, static: false, check_values: false,
+       note: "EUFS gazebo_race_car_plugin publishes track->odom->base_link (pluginParams map/odom/base_frame)"}
+    - {parent: base_link, child: zed2i, static: true, check_values: false,
+       note: "sim URDF mount via chassis; value source eufs_racecar/urdf/robot.urdf.xacro:103 (-0.370, 0, 0.900); composed over chassis z=wheel_diameter/2, so numeric check skipped in sim"}
+  leaf_frames: [zed2i_left_camera_optical_frame, zed2i_right_camera_optical_frame]
+
+liveness:
+  - {topic: /zed2i/zed_node/rgb/image_rect_color, msg_type: sensor_msgs/msg/Image, frames: [zed2i]}
+  - {topic: /zed2i/zed_node/depth/depth_registered, msg_type: sensor_msgs/msg/Image, frames: [zed2i]}
+  - {topic: /zed2i/zed_node/rgb/camera_info, msg_type: sensor_msgs/msg/CameraInfo, frames: [zed2i]}
+  - {topic: /slam/cone_detection, msg_type: driverless_msgs/msg/ConeDetectionStamped, frames: [track]}
+  - {topic: /mapping/cone_map, msg_type: driverless_msgs/msg/ConeDetectionStamped, frames: [track]}
+  - {topic: /planning/path_with_speeds, msg_type: driverless_msgs/msg/PathWithSpeeds, frames: [track]}
+  - {topic: /control/driving_command, msg_type: driverless_msgs/msg/AckermannDriveStamped, frames: [base_link, track]}
+
+qos_topics:
+  - /slam/cone_detection
+  - /mapping/cone_map
+  - /planning/path_with_speeds
+  - /control/driving_command
+
+# wheelbase expectation is the URDF truth (wheels.urdf.xacro 1.580) per F4;
+# NOTE at phase 2 the tracker still loads control.yaml value 1.5 -> this check
+# FAILS by design until governance phase 3 lands the single source.
+params:
+  - {node: /yolo_detector_node, name: size_gate, expect: true}
+  - {node: /yolo_detector_node, name: cone_real_height, expect: 0.305}
+  - {node: /yolo_detector_node, name: cone_large_height, expect: 0.505}
+  - {node: /path_tracker_node, name: wheelbase, expect: 1.580}
+
+nodes: [yolo_detector_node, cone_mapper_node, path_tracker_node]

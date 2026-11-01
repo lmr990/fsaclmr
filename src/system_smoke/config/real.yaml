@@ -1,0 +1,37 @@
+# governance phase 2 — real profile (zed_real_pipeline chain, bench)
+# Mount expectations mirror the launch defaults (cam_z 0.9 / cam_pitch -0.21,
+# 2026-11-02 bench measurement). cam_x -0.370 is still the SIM URDF value:
+# pending user-measured bench value, listed in the governance report (F2).
+tf:
+  wait_sec: 3.0
+  root: track
+  edges:
+    - {parent: track, child: base_link, static: true, check_values: true,
+       expect: {x: 0.0, y: 0.0, z: 0.0, roll: 0.0, pitch: 0.0, yaw: 0.0},
+       note: "bench identity TF (publish_track_tf:=true); on-car localization replaces it"}
+    - {parent: base_link, child: zed2i_camera_link, static: true, check_values: true,
+       expect: {x: -0.370, y: 0.0, z: 0.9, roll: 0.0, pitch: -0.21, yaw: 0.0},
+       note: "camera mount; cam_x pending user confirmation (F2)"}
+  leaf_frames: [zed2i_left_camera_frame_optical]
+
+liveness:
+  - {topic: /zed2i/zed_node/rgb/color/rect/image, msg_type: sensor_msgs/msg/Image, frames: [zed2i]}
+  - {topic: /zed2i/zed_node/depth/depth_registered, msg_type: sensor_msgs/msg/Image, frames: [zed2i]}
+  - {topic: /slam/cone_detection, msg_type: driverless_msgs/msg/ConeDetectionStamped, frames: [track]}
+  - {topic: /mapping/cone_map, msg_type: driverless_msgs/msg/ConeDetectionStamped, frames: [track]}
+  - {topic: /planning/path_with_speeds, msg_type: driverless_msgs/msg/PathWithSpeeds, frames: [track]}
+  - {topic: /control/driving_command, msg_type: driverless_msgs/msg/AckermannDriveStamped, frames: [base_link, track]}
+
+qos_topics:
+  - /slam/cone_detection
+  - /mapping/cone_map
+  - /planning/path_with_speeds
+  - /control/driving_command
+
+params:
+  - {node: /yolo_detector_node, name: size_gate, expect: true}
+  - {node: /yolo_detector_node, name: cone_real_height, expect: 0.305}
+  - {node: /yolo_detector_node, name: cone_large_height, expect: 0.505}
+  - {node: /path_tracker_node, name: wheelbase, expect: 1.580}
+
+nodes: [yolo_detector_node, cone_mapper_node]
