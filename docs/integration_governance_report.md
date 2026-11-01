@@ -90,6 +90,15 @@ real profile TF 正常配置对照 `/tmp/smoke_profile_merged.txt`：`3 PASS -> 
 
 **新增失败 = 0**。
 
+## 6b. 更正（2026-11-02 追加）
+
+此前口头建议中 "pitch 差 1° → 10 m 处 ~1.7 m 纵向误差" 的说法**不适用于本链**：
+该量级属于地面交会/单目尺寸测距管线。本链由双目深度直接反投影相机系 3D 坐标，
+mount 仅经刚性变换进入结果：x/y/yaw 误差 = 全图平移/旋转（一阶）；pitch/z 误差
+主要污染锥桶高度（mapper 丢弃 z），(x,y) 影响为二阶（~d·sinθ·δ，10 m 处 ~4 cm/度）。
+因此 mount 实测优先级：**x、y、yaw > z、pitch**（pitch 的物理意义是视场覆盖）。
+car.yaml 中的相应注释已同步更正。
+
 ## 7. 待用户确认项
 
 1. **bench mount x/y/yaw 实测值**（`bench.yaml` 中为 null；launch 默认 cam_x=-0.370 仍是仿真 URDF 值——F2 的残留半项）。

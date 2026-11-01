@@ -14,7 +14,10 @@ mount:
   y: null            # [m] TODO(整车实测)
   z: null            # [m] TODO(整车实测; 注意 = 离地高 - base_link 离地高)
   roll: 0.0          # [rad] 装夹要求水平
-  pitch: null        # [rad] TODO(整车实测; 建议 -10 ~ -15 deg 下俯, 1 度误差 -> 10 m 处 ~1.7 m)
+  pitch: null        # [rad] TODO(整车实测; 建议 -10 ~ -15 deg 下俯。注: 本链用双目深度
+                     # 直接反投影, pitch TF 误差主要污染锥桶高度(建图丢弃 z), 对 (x,y)
+                     # 为二阶小量(~4 cm/度@10m); 精度优先级低于 x/y/yaw。pitch 的物理
+                     # 意义在视场覆盖(远锥不入画/贴地平线), 不在测距。
   yaw: null          # [rad] TODO(整车实测)
 
 wheelbase: 1.580    # [m] 单一事实源: eufs_racecar/urdf/wheels.urdf.xacro (整车实测后若有偏差以 URDF 修正为准并同步)
